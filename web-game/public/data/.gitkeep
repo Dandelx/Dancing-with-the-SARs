@@ -1,0 +1,2 @@
+# Carpeta puente: el pipeline de Python escribe aquí los PNG/GeoJSON/JSON
+# que consume el juego en Phaser y el visor de Leaflet.
