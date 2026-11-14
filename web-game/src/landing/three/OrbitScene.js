@@ -378,7 +378,7 @@ export function createOrbitScene(container, options = {}) {
   scene.add(ship)
 
   /* --- Post processing --- */
-  const useBloom = !prefersReduced
+  const useBloom = false
   let composer = null
   let bloomPass = null
   if (useBloom) {
