@@ -38,6 +38,8 @@ class OrbitAudio {
 
     this.volume = 0.55
     this.muted = false
+    this.musicEnabled = true
+    this.sfxEnabled = true
     this.started = false
     this.unlocked = false
 
@@ -135,6 +137,23 @@ class OrbitAudio {
     }
   }
 
+  /** Independent channel switches used by the settings dialog. */
+  setMusicEnabled(enabled) {
+    this.musicEnabled = enabled
+    if (this.musicBus && this.ctx) {
+      const target = enabled ? 0.85 : 0.0001
+      this.musicBus.gain.setTargetAtTime(target, this.ctx.currentTime, 0.12)
+    }
+  }
+
+  setSfxEnabled(enabled) {
+    this.sfxEnabled = enabled
+    if (this.sfxBus && this.ctx) {
+      const target = enabled ? 0.85 : 0.0001
+      this.sfxBus.gain.setTargetAtTime(target, this.ctx.currentTime, 0.06)
+    }
+  }
+
   /* ------------------------------------------------------------------ */
   /* Generative ambient music                                            */
   /* ------------------------------------------------------------------ */
@@ -144,7 +163,10 @@ class OrbitAudio {
     this.step = 0
     this.nextNoteTime = this.ctx.currentTime + 0.15
     this.musicBus.gain.setValueAtTime(0.0001, this.ctx.currentTime)
-    this.musicBus.gain.exponentialRampToValueAtTime(0.85, this.ctx.currentTime + 5)
+    this.musicBus.gain.exponentialRampToValueAtTime(
+      this.musicEnabled ? 0.85 : 0.0001,
+      this.ctx.currentTime + 5,
+    )
     this.timer = window.setInterval(() => this._schedule(), 140)
   }
 
@@ -335,6 +357,7 @@ class OrbitAudio {
   /* ------------------------------------------------------------------ */
 
   sfx(name = 'click') {
+    if (!this.sfxEnabled) return
     if (!this.ctx || this.ctx.state !== 'running') {
       /* Still try to unlock so the very first click is not silent. */
       this.unlock().then(() => {

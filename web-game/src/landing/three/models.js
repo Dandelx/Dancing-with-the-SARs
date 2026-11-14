@@ -213,7 +213,7 @@ export function createShip() {
   group.add(plume)
 
   group.userData.plume = plume
-  group.scale.setScalar(0.9)
+  group.scale.setScalar(1.35)
   return group
 }
 

@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import AndeanCat from './AndeanCat.jsx'
-import ProgressRockets from './ProgressRockets.jsx'
+import ProgressBar from './ProgressBar.jsx'
 
 export default function LoadingScreen({ t, onComplete }) {
   const [progress, setProgress] = useState(0)
   const completedRef = useRef(false)
   const onCompleteRef = useRef(onComplete)
-  onCompleteRef.current = onComplete
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete
+  }, [onComplete])
 
   useEffect(() => {
     let frame = 0
@@ -15,7 +18,7 @@ export default function LoadingScreen({ t, onComplete }) {
 
     const tick = () => {
       const raw = Math.min(1, (performance.now() - started) / duration)
-      /* Ease-out so the last rockets line up with the percentage. */
+      /* Ease-out so the cat reaches the end of the lane right at 100%. */
       const eased = 1 - Math.pow(1 - raw, 2.2)
       setProgress(eased * 100)
 
@@ -40,7 +43,10 @@ export default function LoadingScreen({ t, onComplete }) {
       <div className="oj-loading-glow" aria-hidden="true" />
       <div className="oj-loading-scan" aria-hidden="true" />
 
-      <div className="oj-loading-inner">
+      <div
+        className="oj-loading-inner"
+        style={{ '--p': Math.min(1, Math.max(0, progress / 100)) }}
+      >
         <p className="oj-loading-kicker">{t.loadingKicker}</p>
 
         <h2 className="oj-loading-title">
@@ -57,16 +63,17 @@ export default function LoadingScreen({ t, onComplete }) {
 
         <p className="oj-loading-sub">{ready ? t.readyHint : t.loadingHint}</p>
 
-        <div className="oj-cat-stage">
-          <div className="oj-cat-orbit" aria-hidden="true" />
-          <AndeanCat />
+        <div className="oj-cat-lane">
+          <div className="oj-cat-runner" aria-hidden="true">
+            <AndeanCat />
+          </div>
         </div>
 
-        <ProgressRockets progress={progress} />
+        <ProgressBar progress={progress} />
 
         <div className="oj-progress-meta">
           <span className="oj-progress-pct">{rounded}%</span>
-          <span className="oj-progress-label">{t.loadingHint}</span>
+          <span className="oj-progress-label">{t.progressTag}</span>
         </div>
       </div>
     </div>

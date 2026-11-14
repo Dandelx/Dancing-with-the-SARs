@@ -1,8 +1,4 @@
 import * as THREE from 'three'
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
-import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js'
 import {
   createGlowTexture,
   createNisarSatellite,
@@ -377,17 +373,8 @@ export function createOrbitScene(container, options = {}) {
   ship.visible = false
   scene.add(ship)
 
-  /* --- Post processing --- */
-  const useBloom = false
-  let composer = null
-  let bloomPass = null
-  if (useBloom) {
-    composer = new EffectComposer(renderer)
-    composer.addPass(new RenderPass(scene, camera))
-    bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.62, 0.72, 0.72)
-    composer.addPass(bloomPass)
-    composer.addPass(new OutputPass())
-  }
+  /* No post-processing: keeping the canvas alpha clean lets the CSS nebula
+     show through, which matters more than a screen-space bloom halo. */
 
   /* --- Texture loading --- */
   let ready = false
@@ -461,47 +448,44 @@ export function createOrbitScene(container, options = {}) {
   const peruWorld = new THREE.Vector3()
   const tmpVec = new THREE.Vector3()
 
-  const buildFlightPath = () => {
-    const start = station.getWorldPosition(new THREE.Vector3())
-    const startDir = start.clone().normalize()
-    const endDir = PERU_DIR.clone()
-
-    let axis = new THREE.Vector3().crossVectors(startDir, endDir)
-    if (axis.lengthSq() < 1e-6) axis.copy(UP)
-    axis.normalize()
-
-    const baseAngle = Math.acos(THREE.MathUtils.clamp(startDir.dot(endDir), -1, 1))
-    const total = baseAngle + Math.PI * 1.85
-    const startRadius = start.length()
-    const endRadius = EARTH_RADIUS * 1.14
-
-    const points = []
-    for (let i = 0; i <= 56; i += 1) {
-      const t = i / 56
-      const dir = startDir.clone().applyAxisAngle(axis, total * t)
-      const radius = THREE.MathUtils.lerp(startRadius, endRadius, smoothstep(0.1, 1, t))
-      points.push(dir.multiplyScalar(radius))
-    }
-    return new THREE.CatmullRomCurve3(points)
+  /** World-space point on the surface right above Peru (follows earth spin). */
+  const peruWorldPoint = (target = new THREE.Vector3()) => {
+    earthGroup.updateMatrixWorld(true)
+    return target
+      .copy(PERU_DIR)
+      .multiplyScalar(EARTH_RADIUS * 1.004)
+      .applyMatrix4(earthGroup.matrixWorld)
   }
 
-  const buildCameraPath = () => {
-    const side = new THREE.Vector3().crossVectors(PERU_DIR, UP)
+  const buildFlightPath = () => {
+    const start = station.getWorldPosition(new THREE.Vector3())
+    const end = peruWorldPoint(new THREE.Vector3())
+    /* A single straight line — no loops, arcs or detours. */
+    return new THREE.LineCurve3(start, end)
+  }
+
+  const buildCameraPlan = () => {
+    const focus = peruWorldPoint(new THREE.Vector3())
+    const focusDir = focus.clone().normalize()
+    const side = new THREE.Vector3().crossVectors(focusDir, UP)
     if (side.lengthSq() < 1e-6) side.set(1, 0, 0)
     side.normalize()
 
-    const start = camera.position.clone()
-    const a = new THREE.Vector3(2.35, 1.5, 5.7)
-    const b = PERU_DIR.clone()
-      .multiplyScalar(4.9)
-      .addScaledVector(side, 1.35)
-      .addScaledVector(UP, 1.0)
-    const c = PERU_DIR.clone()
-      .multiplyScalar(EARTH_RADIUS * 1.34)
-      .addScaledVector(side, 0.16)
-      .addScaledVector(UP, 0.1)
-
-    return new THREE.CatmullRomCurve3([start, a, b, c])
+    return {
+      from: camera.position.clone(),
+      /* Wide shot: the ship has just reached the planet. */
+      wide: focusDir
+        .clone()
+        .multiplyScalar(EARTH_RADIUS * 5.1)
+        .addScaledVector(side, 0.55)
+        .addScaledVector(UP, 0.3),
+      /* Satellite close-up, dead ahead over the Andes. */
+      close: focusDir.clone().multiplyScalar(EARTH_RADIUS * 2.25),
+      /* Sunrise for the arrival: bias the key light toward the camera so Peru
+         is lit instead of sitting on the terminator. */
+      sun: focusDir.clone().multiplyScalar(0.5).addScaledVector(SUN_DIR, 0.8).normalize(),
+      focus,
+    }
   }
 
   const playIntro = (callbacks = {}) => {
@@ -510,58 +494,83 @@ export function createOrbitScene(container, options = {}) {
     station.updateMatrixWorld(true)
     scene.updateMatrixWorld(true)
 
-    const duration = prefersReduced ? 2200 : 4200
+    const duration = prefersReduced ? 2600 : 5200
     ship.visible = true
+    ship.scale.setScalar(1)
     ship.position.copy(station.getWorldPosition(new THREE.Vector3()))
 
     intro = {
       start: performance.now(),
       duration,
       path: buildFlightPath(),
-      cameraPath: buildCameraPath(),
-      onWarp: callbacks.onWarp,
+      plan: buildCameraPlan(),
+      onClouds: callbacks.onClouds,
       onFlash: callbacks.onFlash,
       onComplete: callbacks.onComplete,
-      warpFired: false,
+      cloudsFired: false,
       flashFired: false,
       done: false,
     }
     if (labelEl) labelEl.style.opacity = '0'
   }
 
+  const endIntro = () => {
+    intro = null
+    ship.visible = false
+    ship.position.set(0, 0, 0)
+    ship.rotation.set(0, 0, 0)
+    camera.position.set(0, 0.42, 7.15)
+    camera.fov = 38
+    camera.updateProjectionMatrix()
+    camera.lookAt(0, 0, 0)
+    if (peruOverlayMaterial) peruOverlayMaterial.opacity = 0
+    earthUniforms.uSunDir.value.copy(SUN_DIR)
+    if (labelEl) labelEl.style.opacity = '1'
+  }
+
   const updateIntro = (now) => {
     if (!intro || intro.done) return
     const p = clamp01((now - intro.start) / intro.duration)
 
-    /* Ship sweeps around the globe. */
-    const shipT = clamp01(p * 1.06)
+    /* 1. The ship flies straight from the station to Peru. */
+    const shipT = clamp01(p / 0.5)
     const position = intro.path.getPointAt(shipT)
     ship.position.copy(position)
-    const ahead = intro.path.getPointAt(clamp01(shipT + 0.012))
-    if (ahead.distanceToSquared(position) > 1e-6) ship.lookAt(ahead)
-    ship.rotateZ(Math.sin(shipT * Math.PI * 4) * 0.16)
+    const ahead = intro.path.getPointAt(clamp01(shipT + 0.008))
+    if (ahead.distanceToSquared(position) > 1e-8) ship.lookAt(ahead)
     if (ship.userData.plume) {
-      const flicker = 0.8 + Math.sin(now * 0.05) * 0.2
-      ship.userData.plume.scale.setScalar(0.26 * flicker)
+      const flicker = 0.85 + Math.sin(now * 0.05) * 0.15
+      ship.userData.plume.scale.setScalar(0.34 * flicker)
     }
+    ship.visible = p < 0.54
 
-    /* Camera: arc out, then dive into the Andes. */
-    const camT = easeInOutCubic(p)
-    camera.position.copy(intro.cameraPath.getPointAt(camT))
-    const focus = smoothstep(0.5, 0.98, p)
-    lookTarget.set(0, 0, 0).lerp(peruWorld, focus)
+    /* 2. Camera: settle above the planet, then dolly straight in. */
+    const { from, wide, close, focus } = intro.plan
+    if (p < 0.5) {
+      camera.position.lerpVectors(from, wide, easeInOutCubic(p / 0.5))
+    } else {
+      camera.position.lerpVectors(wide, close, easeInOutCubic((p - 0.5) / 0.5))
+    }
+    lookTarget.set(0, 0, 0).lerp(focus, smoothstep(0.28, 0.62, p))
     camera.lookAt(lookTarget)
-    camera.fov = 38 + 50 * Math.pow(smoothstep(0.45, 1, p), 1.25)
+    camera.fov = 38 - 8 * smoothstep(0.45, 1, p)
     camera.updateProjectionMatrix()
 
-    if (bloomPass) bloomPass.strength = 0.62 + 1.15 * Math.pow(p, 2)
-    if (peruOverlayMaterial) peruOverlayMaterial.opacity = 0.35 + 0.5 * p
+    /* Peru glows brighter, the beacon melts away as we arrive. */
+    if (peruOverlayMaterial) peruOverlayMaterial.opacity = 0.12 + 0.2 * p
+    peruBeacon.material.opacity *= 1 - smoothstep(0.5, 0.82, p)
 
-    if (!intro.warpFired && p > 0.66) {
-      intro.warpFired = true
-      intro.onWarp?.()
+    /* Dawn over the Andes: the terminator slides off Peru as we close in. */
+    earthUniforms.uSunDir.value
+      .copy(SUN_DIR)
+      .lerp(intro.plan.sun, smoothstep(0.35, 0.92, p))
+      .normalize()
+
+    if (!intro.cloudsFired && p > 0.6) {
+      intro.cloudsFired = true
+      intro.onClouds?.()
     }
-    if (!intro.flashFired && p > 0.88) {
+    if (!intro.flashFired && p > 0.9) {
       intro.flashFired = true
       intro.onFlash?.()
     }
@@ -579,10 +588,6 @@ export function createOrbitScene(container, options = {}) {
     renderer.setSize(width, height, false)
     camera.aspect = width / height
     camera.updateProjectionMatrix()
-    if (composer) {
-      composer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
-      composer.setSize(width, height)
-    }
   }
   const resizeObserver = new ResizeObserver(resize)
   resizeObserver.observe(container)
@@ -619,7 +624,8 @@ export function createOrbitScene(container, options = {}) {
     last = now
     elapsed += delta
 
-    const spin = prefersReduced ? 0.012 : 0.035
+    /* Nearly freeze the globe during the intro so Peru stays framed. */
+    const spin = (prefersReduced ? 0.012 : 0.035) * (intro ? 0.22 : 1)
     earthGroup.rotation.y += delta * spin
     clouds.rotation.y += delta * 0.008
 
@@ -649,8 +655,7 @@ export function createOrbitScene(container, options = {}) {
 
     if (intro) updateIntro(now)
 
-    if (composer) composer.render()
-    else renderer.render(scene, camera)
+    renderer.render(scene, camera)
   }
 
   last = performance.now()
@@ -662,6 +667,7 @@ export function createOrbitScene(container, options = {}) {
       return ready
     },
     playIntro,
+    resetIntro: endIntro,
     setPaused(value) {
       paused = value
       if (!value) last = performance.now()
@@ -670,9 +676,6 @@ export function createOrbitScene(container, options = {}) {
       window.cancelAnimationFrame(rafId)
       window.clearTimeout(readyFallback)
       resizeObserver.disconnect()
-      if (composer) {
-        composer.dispose()
-      }
       scene.traverse((object) => {
         if (object.geometry) object.geometry.dispose()
       })

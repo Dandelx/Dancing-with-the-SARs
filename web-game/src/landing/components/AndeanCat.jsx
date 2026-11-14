@@ -1,12 +1,13 @@
 /**
- * Andean cat (Leopardus jacobita) runner — a pure SVG silhouette with a
- * geologist's field hat. Drawn from primitives, so no artwork licence applies.
+ * Andean cat (Leopardus jacobita) runner — a pure SVG silhouette drawn from
+ * primitives (no artwork licence applies). Slender body, rounded ears and the
+ * signature long banded tail, plus a small geologist hat.
  */
 export default function AndeanCat() {
   return (
     <svg
       className="oj-cat"
-      viewBox="0 0 260 150"
+      viewBox="0 0 260 120"
       role="img"
       aria-label="Andean cat running with an explorer hat"
     >
@@ -23,67 +24,95 @@ export default function AndeanCat() {
       </defs>
 
       {/* ground shadow */}
-      <ellipse cx="128" cy="138" rx="82" ry="6.5" fill="rgba(0,0,0,0.42)" />
+      <ellipse cx="128" cy="112" rx="80" ry="5" fill="rgba(0,0,0,0.3)" />
 
       <g className="oj-cat-run">
-        {/* tail */}
+        {/* long banded tail */}
         <g className="oj-cat-tail">
           <path
-            d="M96 94C70 99 48 84 42 60c-3-12 2-22 12-27"
+            d="M82 72C60 78 42 70 33 55c-5-9-4-19 3-26"
             fill="none"
             stroke="url(#ojCatGrad)"
-            strokeWidth="13"
+            strokeWidth="12"
             strokeLinecap="round"
           />
-          <g stroke="#5a3313" strokeWidth="3" strokeLinecap="round" opacity="0.55">
-            <path d="M46 36l7 9" />
-            <path d="M40 55l11 3" />
-            <path d="M52 76l8-6" />
-          </g>
+          <path
+            d="M82 72C60 78 42 70 33 55c-5-9-4-19 3-26"
+            fill="none"
+            stroke="#56310f"
+            strokeWidth="11.2"
+            strokeDasharray="5.5 8.5"
+            strokeLinecap="butt"
+            opacity="0.55"
+          />
         </g>
 
         {/* far legs */}
-        <g className="oj-leg oj-leg--far" style={{ transformOrigin: '116px 98px' }}>
-          <rect x="110" y="92" width="11" height="38" rx="5.5" fill="url(#ojCatGradFar)" />
+        <g className="oj-leg oj-leg--far" style={{ transformOrigin: '104px 74px' }}>
+          <rect x="100" y="68" width="9" height="32" rx="4.5" fill="url(#ojCatGradFar)" />
+          <circle cx="104.5" cy="101" r="5" fill="url(#ojCatGradFar)" />
         </g>
-        <g className="oj-leg oj-leg--far oj-leg--delay" style={{ transformOrigin: '170px 98px' }}>
-          <rect x="164" y="92" width="11" height="38" rx="5.5" fill="url(#ojCatGradFar)" />
+        <g className="oj-leg oj-leg--far oj-leg--delay" style={{ transformOrigin: '172px 72px' }}>
+          <rect x="168" y="66" width="9" height="32" rx="4.5" fill="url(#ojCatGradFar)" />
+          <circle cx="172.5" cy="99" r="5" fill="url(#ojCatGradFar)" />
         </g>
 
-        {/* body */}
-        <circle cx="108" cy="92" r="27" fill="url(#ojCatGrad)" />
-        <ellipse cx="142" cy="86" rx="48" ry="25" fill="url(#ojCatGrad)" />
-        <circle cx="176" cy="86" r="21" fill="url(#ojCatGrad)" />
+        {/* body, neck and head */}
+        <path
+          d="M72 58C82 46 104 42 128 44c24 2 42 10 52 20 4 6 2 14-6 18-16 8-42 10-64 8-18-2-34-8-40-18-2-6-1-11 2-14Z"
+          fill="url(#ojCatGrad)"
+        />
+        <path
+          d="M168 60c8-8 14-12 22-14"
+          fill="none"
+          stroke="url(#ojCatGrad)"
+          strokeWidth="24"
+          strokeLinecap="round"
+        />
 
-        {/* head */}
-        <circle cx="200" cy="66" r="20" fill="url(#ojCatGrad)" />
-        <ellipse cx="214" cy="72" rx="10" ry="7.5" fill="url(#ojCatGrad)" />
-        <path d="M186 55 183 33 199 47Z" fill="url(#ojCatGrad)" />
-        <path d="M204 47 216 33 219 55Z" fill="url(#ojCatGrad)" />
-        <ellipse cx="204" cy="64" rx="2.3" ry="3.2" fill="#2a1608" opacity="0.9" />
+        {/* ears (small, rounded, wide set) */}
+        <path
+          d="M191 33 187 21 199 29Z"
+          fill="url(#ojCatGrad)"
+          stroke="url(#ojCatGrad)"
+          strokeWidth="4"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M207 29 214 19 217 30Z"
+          fill="url(#ojCatGradFar)"
+          stroke="url(#ojCatGradFar)"
+          strokeWidth="4"
+          strokeLinejoin="round"
+        />
 
-        {/* explorer hat */}
-        <g className="oj-cat-hat" transform="rotate(-9 200 46)">
-          <ellipse cx="200" cy="46" rx="33" ry="7.5" fill="#a86a2c" />
-          <path d="M182 46c0-18 6-26 18-26s18 8 18 26Z" fill="#c98f45" />
-          <rect x="182" y="38" width="36" height="6" rx="2.4" fill="#6b3f16" />
-          <path d="M188 32c3-6 8-8 12-8" stroke="#8a5624" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.7" />
+        <circle cx="200" cy="44" r="14.5" fill="url(#ojCatGrad)" />
+        <ellipse cx="212" cy="48" rx="7.4" ry="5.4" fill="url(#ojCatGrad)" />
+        <ellipse cx="204" cy="42" rx="1.8" ry="2.5" fill="#2a1608" opacity="0.9" />
+
+        {/* geologist hat */}
+        <g className="oj-cat-hat">
+          <ellipse cx="200" cy="27" rx="17" ry="4.2" fill="#a86a2c" />
+          <path d="M190 27c0-9 4-13 10-13s10 4 10 13Z" fill="#c98f45" />
+          <rect x="190" y="21.5" width="20" height="4" rx="1.8" fill="#6b3f16" />
         </g>
 
         {/* near legs */}
-        <g className="oj-leg" style={{ transformOrigin: '104px 98px' }}>
-          <rect x="98" y="92" width="12" height="40" rx="6" fill="url(#ojCatGrad)" />
+        <g className="oj-leg" style={{ transformOrigin: '91px 76px' }}>
+          <rect x="86" y="70" width="10.5" height="33" rx="5" fill="url(#ojCatGrad)" />
+          <circle cx="91.5" cy="104" r="5.3" fill="url(#ojCatGrad)" />
         </g>
-        <g className="oj-leg oj-leg--delay" style={{ transformOrigin: '180px 98px' }}>
-          <rect x="174" y="92" width="12" height="40" rx="6" fill="url(#ojCatGrad)" />
+        <g className="oj-leg oj-leg--delay" style={{ transformOrigin: '159px 74px' }}>
+          <rect x="154" y="68" width="10.5" height="33" rx="5" fill="url(#ojCatGrad)" />
+          <circle cx="159.5" cy="102" r="5.3" fill="url(#ojCatGrad)" />
         </g>
       </g>
 
       {/* dust puffs */}
       <g className="oj-dust" fill="#e6c489">
-        <ellipse className="oj-dust-puff" cx="64" cy="132" rx="10" ry="4" />
-        <ellipse className="oj-dust-puff oj-dust-puff--delay" cx="40" cy="130" rx="7" ry="3" />
-        <ellipse className="oj-dust-puff oj-dust-puff--delay-2" cx="86" cy="134" rx="6" ry="2.6" />
+        <ellipse className="oj-dust-puff" cx="54" cy="104" rx="10" ry="4" />
+        <ellipse className="oj-dust-puff oj-dust-puff--delay" cx="30" cy="102" rx="7" ry="3" />
+        <ellipse className="oj-dust-puff oj-dust-puff--delay-2" cx="72" cy="106" rx="6" ry="2.6" />
       </g>
     </svg>
   )

@@ -1,6 +1,3 @@
-import { useRef } from 'react'
-import audio from '../audio/audioEngine.js'
-
 export default function TopBar({ children }) {
   return (
     <header className="oj-topbar">
@@ -19,20 +16,7 @@ export default function TopBar({ children }) {
         </span>
       </div>
 
-      <div className="oj-controls">
-        {children}
-      </div>
+      <div className="oj-controls">{children}</div>
     </header>
   )
-}
-
-/* Kept as a tiny helper so hover SFX stay consistent across buttons. */
-export function useHoverSfx() {
-  const last = useRef(0)
-  return () => {
-    const now = Date.now()
-    if (now - last.current < 350) return
-    last.current = now
-    audio.sfx('hover')
-  }
 }

@@ -6,6 +6,8 @@ import { createOrbitScene } from './three/OrbitScene.js'
 import TopBar from './components/TopBar.jsx'
 import LanguageSelect from './components/LanguageSelect.jsx'
 import AudioControl from './components/AudioControl.jsx'
+import SettingsButton from './components/SettingsButton.jsx'
+import SettingsModal from './components/SettingsModal.jsx'
 import PlayButton from './components/PlayButton.jsx'
 import LoadingScreen from './components/LoadingScreen.jsx'
 
@@ -20,9 +22,26 @@ const readStoredVolume = () => {
   }
 }
 
+const readStoredToggle = (key) => {
+  try {
+    return window.localStorage.getItem(key) !== 'off'
+  } catch {
+    return true
+  }
+}
+
+const storeToggle = (key, value) => {
+  try {
+    window.localStorage.setItem(key, value ? 'on' : 'off')
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function OrbitJumpLanding() {
   const [lang, setLang] = useState(detectLanguage)
   const t = getStrings(lang)
+  const [eyebrowLead, eyebrowTail] = t.eyebrow.split('·').map((part) => part.trim())
 
   const [phase, setPhase] = useState('idle') // idle | launching | loading | ready
   const [sceneReady, setSceneReady] = useState(false)
@@ -30,7 +49,10 @@ export default function OrbitJumpLanding() {
   const [volume, setVolume] = useState(readStoredVolume)
   const [muted, setMuted] = useState(false)
   const [audioOn, setAudioOn] = useState(false)
-  const [warp, setWarp] = useState(false)
+  const [musicOn, setMusicOn] = useState(() => readStoredToggle('orbitjump.music'))
+  const [sfxOn, setSfxOn] = useState(() => readStoredToggle('orbitjump.sfx'))
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [clouds, setClouds] = useState(false)
   const [flash, setFlash] = useState(false)
 
   const stageRef = useRef(null)
@@ -79,6 +101,14 @@ export default function OrbitJumpLanding() {
   }, [])
 
   useEffect(() => {
+    audio.setMusicEnabled(musicOn)
+  }, [musicOn])
+
+  useEffect(() => {
+    audio.setSfxEnabled(sfxOn)
+  }, [sfxOn])
+
+  useEffect(() => {
     const unlock = () => {
       audio.unlock().then((ok) => {
         if (ok) setAudioOn(true)
@@ -101,6 +131,8 @@ export default function OrbitJumpLanding() {
   useEffect(() => {
     if (phase === 'loading' || phase === 'ready') {
       sceneRef.current?.setPaused(true)
+    } else {
+      sceneRef.current?.setPaused(false)
     }
   }, [phase])
 
@@ -134,6 +166,38 @@ export default function OrbitJumpLanding() {
     }
   }
 
+  const toggleMusic = (next) => {
+    setMusicOn(next)
+    storeToggle('orbitjump.music', next)
+    if (next) {
+      audio.unlock().then((ok) => {
+        if (ok) setAudioOn(true)
+      })
+    }
+  }
+
+  const toggleSfx = (next) => {
+    setSfxOn(next)
+    storeToggle('orbitjump.sfx', next)
+  }
+
+  const closeSettings = useCallback(() => setSettingsOpen(false), [])
+
+  const handleExit = () => {
+    setSettingsOpen(false)
+    window.dispatchEvent(new CustomEvent('orbitjump:exit'))
+    try {
+      window.close()
+    } catch {
+      /* ignore */
+    }
+    /* Browsers block window.close(), so fall back to the landing screen. */
+    sceneRef.current?.resetIntro()
+    setClouds(false)
+    setFlash(false)
+    setPhase('idle')
+  }
+
   const handlePlay = useCallback(() => {
     if (phase !== 'idle' || !sceneReady) return
 
@@ -150,8 +214,8 @@ export default function OrbitJumpLanding() {
     }
 
     sceneRef.current.playIntro({
-      onWarp: () => {
-        setWarp(true)
+      onClouds: () => {
+        setClouds(true)
         audio.sfx('warp')
       },
       onFlash: () => setFlash(true),
@@ -204,11 +268,18 @@ export default function OrbitJumpLanding() {
           onToggleMute={toggleMute}
           t={t}
         />
+        <SettingsButton onClick={() => setSettingsOpen(true)} label={t.settings} />
       </TopBar>
 
       <main className="oj-main">
         <header className="oj-hero">
-          <p className="oj-eyebrow">{t.eyebrow}</p>
+          <p className="oj-eyebrow">
+            <span>{eyebrowLead}</span>
+            <span className="oj-eyebrow-dot" aria-hidden="true">
+              ·
+            </span>
+            <span>{eyebrowTail}</span>
+          </p>
           <h1 className="oj-title">Orbit Jump</h1>
           <div className="oj-chakana" aria-hidden="true">
             <svg viewBox="0 0 260 22" fill="none">
@@ -252,8 +323,20 @@ export default function OrbitJumpLanding() {
         <span className="oj-credit">{t.footer}</span>
       </footer>
 
-      {warp && <div className="oj-warp" aria-hidden="true" />}
+      {clouds && <div className="oj-clouds" aria-hidden="true" />}
       {flash && <div className="oj-flash" aria-hidden="true" />}
+
+      {settingsOpen && (
+        <SettingsModal
+          t={t}
+          musicOn={musicOn}
+          sfxOn={sfxOn}
+          onToggleMusic={toggleMusic}
+          onToggleSfx={toggleSfx}
+          onExit={handleExit}
+          onClose={closeSettings}
+        />
+      )}
 
       {(phase === 'loading' || phase === 'ready') && (
         <LoadingScreen t={t} onComplete={handleLoaded} />

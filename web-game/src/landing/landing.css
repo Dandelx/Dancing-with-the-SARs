@@ -144,6 +144,45 @@
   gap: 9px;
 }
 
+.oj-settings-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 14px 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(240, 196, 106, 0.22);
+  background: rgba(9, 12, 22, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  color: #cfc4ad;
+  font-family: var(--oj-font-display);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease,
+    transform 0.25s ease;
+}
+
+.oj-settings-btn:hover {
+  color: #ffe6ad;
+  border-color: rgba(240, 196, 106, 0.48);
+  background: rgba(13, 17, 30, 0.72);
+  transform: translateY(-1px);
+}
+
+.oj-settings-btn:focus-visible {
+  outline: 2px solid rgba(240, 196, 106, 0.6);
+  outline-offset: 2px;
+}
+
+.oj-settings-btn svg {
+  flex: 0 0 auto;
+}
+
 /* ---------------------------------------------------------------- */
 /* Controls: language + audio                                        */
 /* ---------------------------------------------------------------- */
@@ -296,6 +335,11 @@
 }
 
 .oj-eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0 0.85ch;
   margin: 0;
   font-family: var(--oj-font-display);
   font-size: clamp(8.5px, 0.82vw, 11px);
@@ -303,6 +347,10 @@
   letter-spacing: 0.34em;
   text-transform: uppercase;
   color: #bfa06a;
+}
+
+.oj-eyebrow-dot {
+  opacity: 0.6;
 }
 
 .oj-title {
@@ -365,16 +413,46 @@
   max-width: 1180px;
   height: clamp(240px, 43vh, 545px);
   flex: 0 0 auto;
+  /* Full-height mask by default; during the jump it fades top and bottom so the
+     camera dive never shows the hard edge of the WebGL canvas. */
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 100%);
+  transition: -webkit-mask-image 1.1s ease, mask-image 1.1s ease;
+}
+
+.oj-shell.is-busy .oj-stage {
+  /* The dive takes over the whole screen: a satellite zoom inside a small
+     43vh box would be clipped by a hard rectangular edge. */
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  max-width: none;
+  height: 100svh;
+  -webkit-mask-image: none;
+  mask-image: none;
+  animation: oj-stage-launch 0.55s ease-out both;
 }
 
 .oj-stage::before {
   content: "";
   position: absolute;
-  inset: 6% 10%;
+  left: 50%;
+  top: 50%;
   z-index: -1;
+  width: min(78%, 470px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(62, 122, 224, 0.18), transparent 62%);
-  filter: blur(34px);
+  /* The gradient is fully transparent well before the element edge, so the
+     blur never shows the box of this pseudo-element. */
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(62, 122, 224, 0.24),
+    rgba(62, 122, 224, 0.09) 46%,
+    rgba(62, 122, 224, 0) 70%
+  );
+  filter: blur(30px);
   pointer-events: none;
 }
 
@@ -658,6 +736,186 @@
 }
 
 /* ---------------------------------------------------------------- */
+/* Settings dialog                                                   */
+/* ---------------------------------------------------------------- */
+
+.oj-modal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(
+    70% 60% at 50% 42%,
+    rgba(8, 12, 22, 0.38),
+    rgba(2, 4, 9, 0.78)
+  );
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  animation: oj-fade-in 0.28s ease both;
+}
+
+.oj-modal {
+  position: relative;
+  width: min(92vw, 356px);
+  padding: 30px 26px 24px;
+  border-radius: 26px;
+  border: 1px solid rgba(240, 196, 106, 0.26);
+  background: linear-gradient(158deg, rgba(32, 40, 60, 0.72), rgba(9, 12, 22, 0.88) 62%);
+  backdrop-filter: blur(30px) saturate(140%);
+  -webkit-backdrop-filter: blur(30px) saturate(140%);
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 60px rgba(224, 163, 72, 0.09);
+  text-align: center;
+  animation: oj-modal-in 0.42s cubic-bezier(0.2, 1.1, 0.4, 1) both;
+}
+
+.oj-modal-title {
+  margin: 0;
+  font-family: var(--oj-font-display);
+  font-weight: 600;
+  font-size: clamp(20px, 2.4vw, 26px);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fff3d6, #e3ad55);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.oj-modal-sub {
+  margin: 8px 0 0;
+  font-family: var(--oj-font-display);
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #858da2;
+}
+
+.oj-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(240, 196, 106, 0.18);
+  background: rgba(8, 11, 20, 0.5);
+  color: #a9a293;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.oj-modal-close:hover,
+.oj-modal-close:focus-visible {
+  color: #ffe6ad;
+  border-color: rgba(240, 196, 106, 0.5);
+  background: rgba(20, 26, 42, 0.8);
+  outline: none;
+}
+
+.oj-modal-list {
+  margin: 22px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.oj-modal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.oj-modal-label {
+  font-family: var(--oj-font-display);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #ece0c6;
+}
+
+.oj-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 25px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(240, 196, 106, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: background 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+}
+
+.oj-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #8d8678;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  transition: transform 0.28s cubic-bezier(0.2, 1.2, 0.4, 1), background 0.28s ease;
+}
+
+.oj-switch[aria-checked="true"] {
+  background: linear-gradient(90deg, #b4712f, #e0a84e);
+  border-color: rgba(255, 226, 170, 0.55);
+  box-shadow: 0 0 14px rgba(240, 196, 106, 0.35);
+}
+
+.oj-switch[aria-checked="true"]::after {
+  transform: translateX(21px);
+  background: #241605;
+}
+
+.oj-switch:focus-visible {
+  outline: 2px solid rgba(240, 196, 106, 0.6);
+  outline-offset: 2px;
+}
+
+.oj-modal-exit {
+  width: 100%;
+  height: 44px;
+  margin-top: 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 176, 132, 0.35);
+  background: linear-gradient(135deg, #c2562f, #8e3a1e);
+  color: #ffe9d8;
+  font-family: var(--oj-font-display);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(150, 58, 26, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+}
+
+.oj-modal-exit:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(160, 62, 28, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.oj-modal-exit:focus-visible {
+  outline: 2px solid rgba(255, 206, 176, 0.7);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------- */
 /* Launch transition                                                 */
 /* ---------------------------------------------------------------- */
 
@@ -669,46 +927,22 @@
   pointer-events: none;
 }
 
-.oj-warp {
+/* Cloud layer the camera dives through before the satellite close-up. */
+.oj-clouds {
   position: fixed;
   inset: 0;
   z-index: 40;
   pointer-events: none;
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(255, 255, 255, 0.06) 0%,
-    rgba(4, 8, 20, 0) 24%,
-    rgba(3, 6, 14, 0.55) 78%
-  );
-  animation: oj-warp-in 0.4s ease-out both;
-}
-
-.oj-warp::before {
-  content: "";
-  position: absolute;
-  inset: -45%;
-  background: repeating-conic-gradient(
-    from 0deg at 50% 50%,
-    rgba(255, 255, 255, 0) 0deg 0.9deg,
-    rgba(198, 224, 255, 0.55) 0.9deg 1.15deg
-  );
-  -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent 0 13%, #000 42%, transparent 72%);
-  mask-image: radial-gradient(circle at 50% 50%, transparent 0 13%, #000 42%, transparent 72%);
-  animation: oj-warp-spin 1.15s linear infinite;
-}
-
-.oj-warp::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 34vmin;
-  height: 34vmin;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 245, 220, 0.6), transparent 66%);
-  filter: blur(6px);
-  animation: oj-warp-core 1.2s ease-in forwards;
+  background:
+    radial-gradient(56% 40% at 14% 26%, rgba(255, 255, 255, 0.34), transparent 66%),
+    radial-gradient(50% 36% at 64% 16%, rgba(226, 238, 255, 0.28), transparent 68%),
+    radial-gradient(68% 50% at 86% 68%, rgba(255, 252, 246, 0.24), transparent 66%),
+    radial-gradient(46% 34% at 34% 82%, rgba(212, 228, 255, 0.22), transparent 68%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent 0 26%, #000 68%);
+  mask-image: radial-gradient(circle at 50% 50%, transparent 0 26%, #000 68%);
+  filter: blur(20px);
+  mix-blend-mode: screen;
+  animation: oj-clouds-in 1.1s ease-out both, oj-clouds-drift 11s ease-in-out infinite;
 }
 
 .oj-flash {
@@ -840,25 +1074,24 @@
 
 /* Running cat ------------------------------------------------------ */
 
-.oj-cat-stage {
+.oj-cat-lane {
+  --oj-cat-w: clamp(116px, 24vw, 158px);
   position: relative;
-  width: clamp(230px, 38vw, 360px);
-  margin: clamp(14px, 3vh, 34px) auto clamp(10px, 2vh, 20px);
-  display: grid;
-  place-items: center;
+  width: 100%;
+  max-width: 560px;
+  height: clamp(74px, 11vh, 100px);
+  margin: clamp(14px, 3.4vh, 34px) 0 0;
 }
 
-.oj-cat-orbit {
+.oj-cat-runner {
   position: absolute;
-  inset: -16% -8%;
-  border: 1px dashed rgba(240, 196, 106, 0.18);
-  border-radius: 50%;
-  animation: oj-spin-slow 22s linear infinite;
-  pointer-events: none;
+  bottom: 0;
+  left: calc(var(--p, 0) * (100% - var(--oj-cat-w)));
+  width: var(--oj-cat-w);
 }
 
 .oj-cat {
-  position: relative;
+  display: block;
   width: 100%;
   height: auto;
   overflow: visible;
@@ -890,19 +1123,20 @@
 
 .oj-cat-tail {
   transform-box: view-box;
-  transform-origin: 96px 92px;
+  transform-origin: 82px 72px;
   animation: oj-tail 0.56s ease-in-out infinite;
 }
 
 .oj-cat-hat {
   animation: oj-hat-bob 0.56s ease-in-out infinite;
   transform-box: view-box;
-  transform-origin: 200px 46px;
+  transform-origin: 200px 27px;
 }
 
 .oj-dust-puff {
   animation: oj-dust 0.9s ease-out infinite;
-  transform-box: view-box;
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
 .oj-dust-puff--delay {
@@ -919,7 +1153,7 @@
   position: relative;
   width: 100%;
   max-width: 560px;
-  margin-top: 30px;
+  margin-top: 20px;
 }
 
 .oj-progress-track {
@@ -930,57 +1164,37 @@
 }
 
 .oj-progress-fill {
+  width: calc(var(--p, 0) * 100%);
   height: 100%;
   border-radius: 999px;
   background: linear-gradient(90deg, #b4712f, #e0a84e 45%, #ffe6ad);
   box-shadow: 0 0 14px rgba(240, 196, 106, 0.6);
-  transition: width 0.15s linear;
 }
 
-.oj-rockets {
-  position: absolute;
-  left: 18px;
-  right: 18px;
-  top: -13px;
-  height: 26px;
-}
-
-.oj-rocket {
+/* A single ship riding the bar, tied to the very same --p. */
+.oj-progress-ship {
   position: absolute;
   top: 0;
-  transform: translateX(-50%);
-  width: 24px;
-  height: 24px;
-  color: rgba(150, 160, 182, 0.35);
-  transition: color 0.4s ease, transform 0.4s cubic-bezier(0.2, 1.3, 0.4, 1),
-    filter 0.4s ease;
+  left: calc(var(--p, 0) * (100% - 26px));
+  width: 26px;
+  height: 26px;
+  transform: translateY(-50%) rotate(90deg);
+  color: #ffe1a4;
+  filter: drop-shadow(0 0 8px rgba(255, 196, 107, 0.85));
+  pointer-events: none;
 }
 
-.oj-rocket-svg {
+.oj-bar-ship-svg {
   width: 100%;
   height: 100%;
   display: block;
 }
 
-.oj-rocket-flame {
-  opacity: 0;
+.oj-bar-ship-flame {
   fill: #ff9a3c;
-}
-
-.oj-rocket.is-lit {
-  color: #ffd28a;
-  filter: drop-shadow(0 0 7px rgba(255, 196, 107, 0.65));
-}
-
-.oj-rocket.is-lit .oj-rocket-flame {
-  opacity: 1;
-  animation: oj-flame 0.4s ease-in-out infinite alternate;
-}
-
-.oj-rocket.is-lead {
-  color: #fff0c8;
-  transform: translateX(-50%) scale(1.3);
-  filter: drop-shadow(0 0 12px rgba(255, 214, 138, 0.95));
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+  animation: oj-flame 0.34s ease-in-out infinite alternate;
 }
 
 .oj-progress-meta {
@@ -1071,32 +1285,44 @@
   }
 }
 
-@keyframes oj-warp-in {
+@keyframes oj-stage-launch {
   from {
-    opacity: 0;
+    opacity: 0.35;
   }
   to {
     opacity: 1;
   }
 }
 
-@keyframes oj-warp-spin {
+@keyframes oj-clouds-in {
+  from {
+    opacity: 0;
+    transform: scale(1.18);
+  }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
-@keyframes oj-warp-core {
-  from {
-    transform: translate(-50%, -50%) scale(0.4);
-    opacity: 0;
+@keyframes oj-clouds-drift {
+  0%,
+  100% {
+    background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%;
   }
-  60% {
-    opacity: 0.8;
+  50% {
+    background-position: 3% 2%, -2% 1%, -3% -2%, 2% -1%;
+  }
+}
+
+@keyframes oj-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
   }
   to {
-    transform: translate(-50%, -50%) scale(3.4);
-    opacity: 0;
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -1270,8 +1496,19 @@
     gap: 4px;
   }
 
+  .oj-settings-btn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .oj-settings-label {
+    display: none;
+  }
+
   .oj-range {
-    width: 58px;
+    width: 46px;
   }
 
   .oj-stage {
@@ -1297,8 +1534,25 @@
     padding: 0 6px;
   }
 
-  .oj-cat-stage {
-    width: min(76vw, 320px);
+  .oj-eyebrow {
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    max-width: 32ch;
+  }
+
+  .oj-progress {
+    margin-top: 24px;
+  }
+
+  .oj-cat-lane {
+    --oj-cat-w: 104px;
+    height: 62px;
+    margin-top: 18px;
+  }
+
+  .oj-modal {
+    padding: 26px 20px 20px;
+    border-radius: 22px;
   }
 
   .oj-progress-meta {
@@ -1309,6 +1563,16 @@
 
   .oj-progress-label {
     text-align: center;
+  }
+}
+
+@media (max-width: 400px) {
+  .oj-brand-mark {
+    display: none;
+  }
+
+  .oj-select {
+    padding: 0 20px 0 9px;
   }
 }
 
@@ -1335,7 +1599,6 @@
   .oj-title,
   .oj-play-halo,
   .oj-loading-stars,
-  .oj-cat-orbit,
   .oj-earth-fallback,
   .oj-peru-dot::after,
   .oj-audio-wave::before,
@@ -1348,12 +1611,11 @@
   .oj-cat-tail,
   .oj-cat-hat,
   .oj-dust-puff,
-  .oj-rocket.is-lit .oj-rocket-flame {
+  .oj-bar-ship-flame {
     animation: none !important;
   }
 
-  .oj-warp::before,
-  .oj-warp::after {
-    animation-duration: 2.4s;
+  .oj-clouds {
+    animation: oj-clouds-in 0.4s ease-out both;
   }
 }

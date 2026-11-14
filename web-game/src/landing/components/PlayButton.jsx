@@ -1,5 +1,4 @@
-import audio from '../audio/audioEngine.js'
-import { useHoverSfx } from './TopBar.jsx'
+import useHoverSfx from '../hooks/useHoverSfx.js'
 
 export default function PlayButton({ onClick, disabled, label, hint, ready }) {
   const hover = useHoverSfx()
