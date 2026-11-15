@@ -1079,7 +1079,7 @@
   position: relative;
   width: 100%;
   max-width: 560px;
-  height: clamp(74px, 11vh, 100px);
+  height: clamp(58px, 8vh, 76px);
   margin: clamp(14px, 3.4vh, 34px) 0 0;
 }
 
@@ -1088,63 +1088,29 @@
   bottom: 0;
   left: calc(var(--p, 0) * (100% - var(--oj-cat-w)));
   width: var(--oj-cat-w);
+  /* 389x164 is the artwork's own bounding box inside the 500x500 PNG. */
+  aspect-ratio: 389 / 164;
+  /* Trims the transparent padding (and the scattered sparkles) so the cat's
+     nose and tail line up exactly with 0 % and 100 %. */
+  overflow: hidden;
 }
 
 .oj-cat {
+  position: absolute;
+  left: -9.25%;
+  top: -102.44%;
   display: block;
-  width: 100%;
+  width: 128.53%;
+  max-width: none;
   height: auto;
-  overflow: visible;
-  filter: drop-shadow(0 0 22px rgba(240, 196, 106, 0.35));
-}
-
-.oj-cat-run {
-  animation: oj-cat-bob 0.56s ease-in-out infinite;
-  transform-box: view-box;
-}
-
-.oj-cat .oj-leg {
-  transform-box: view-box;
-  animation: oj-leg-run 0.56s linear infinite;
-}
-
-.oj-cat .oj-leg--delay {
-  animation-delay: -0.28s;
-}
-
-.oj-cat .oj-leg--far {
-  animation-delay: -0.14s;
-  animation-duration: 0.56s;
-}
-
-.oj-cat .oj-leg--far.oj-leg--delay {
-  animation-delay: -0.42s;
-}
-
-.oj-cat-tail {
-  transform-box: view-box;
-  transform-origin: 82px 72px;
-  animation: oj-tail 0.56s ease-in-out infinite;
-}
-
-.oj-cat-hat {
-  animation: oj-hat-bob 0.56s ease-in-out infinite;
-  transform-box: view-box;
-  transform-origin: 200px 27px;
-}
-
-.oj-dust-puff {
-  animation: oj-dust 0.9s ease-out infinite;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.oj-dust-puff--delay {
-  animation-delay: 0.3s;
-}
-
-.oj-dust-puff--delay-2 {
-  animation-delay: 0.6s;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  /* The PNG is a near-black silhouette (#111). On the dark loading screen it
+     would disappear, so it is inverted into a warm gold silhouette that
+     matches the UI. Drop this line to render the artwork untouched. */
+  filter: invert(1) sepia(0.5) saturate(1.9) brightness(0.97)
+    drop-shadow(0 0 10px rgba(240, 196, 106, 0.3));
 }
 
 /* Progress --------------------------------------------------------- */
@@ -1383,59 +1349,6 @@
   }
 }
 
-@keyframes oj-cat-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-}
-
-@keyframes oj-leg-run {
-  0% {
-    transform: rotate(31deg);
-  }
-  50% {
-    transform: rotate(-32deg);
-  }
-  100% {
-    transform: rotate(31deg);
-  }
-}
-
-@keyframes oj-tail {
-  0%,
-  100% {
-    transform: rotate(-5deg);
-  }
-  50% {
-    transform: rotate(6deg);
-  }
-}
-
-@keyframes oj-hat-bob {
-  0%,
-  100% {
-    transform: rotate(-9deg) translateY(0);
-  }
-  50% {
-    transform: rotate(-7deg) translateY(-1.5px);
-  }
-}
-
-@keyframes oj-dust {
-  0% {
-    opacity: 0.55;
-    transform: translate(0, 0) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-14px, -6px) scale(1.7);
-  }
-}
-
 @keyframes oj-flame {
   from {
     transform: scaleY(0.6);
@@ -1546,7 +1459,7 @@
 
   .oj-cat-lane {
     --oj-cat-w: 104px;
-    height: 62px;
+    height: 48px;
     margin-top: 18px;
   }
 
@@ -1606,11 +1519,6 @@
     animation: none !important;
   }
 
-  .oj-cat-run,
-  .oj-cat .oj-leg,
-  .oj-cat-tail,
-  .oj-cat-hat,
-  .oj-dust-puff,
   .oj-bar-ship-flame {
     animation: none !important;
   }
