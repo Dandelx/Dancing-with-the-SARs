@@ -1,0 +1,199 @@
+{
+  "proyecto": "Dancing with the SARs — NASA Space Apps Challenge 2026",
+  "fecha_compilacion": "2026-11-15",
+  "fuentes_oficiales": {
+    "nasa": {
+      "desafio_space_apps": "https://www.spaceappschallenge.org/2026/challenges/dancing-with-the-sars/",
+      "nisar_storymaps_portal": "https://science.nasa.gov/mission/nisar/arcgis-storymaps/",
+      "storymaps_individuales": {
+        "inundaciones": "https://storymaps.arcgis.com/stories/c00d7691b8004b20a14f28df710d05fd",
+        "incendios_forestales": "https://storymaps.arcgis.com/stories/4724cd32c4064b9eb5ebe300c1385d07",
+        "hundimiento_terreno": "https://storymaps.arcgis.com/stories/109e602e748346f3be8dc89124619828",
+        "derrames_petroleo": "https://storymaps.arcgis.com/stories/bda9a0fb909946918579830747a3a2a9",
+        "movimiento_glaciar": "https://storymaps.arcgis.com/stories/7c674de4e9024a219249627500d2449b"
+      },
+      "documentos_tecnicos_nisar": "https://nisar-docs.asf.alaska.edu/documents/",
+      "manual_usuario_ciencia_nisar_pdf": "https://assets.science.nasa.gov/content/dam/science/missions/nisar/nisar-jpl/pdf/NISAR_FINAL_9-6-19.pdf",
+      "guia_usuario_datos_nisar": "https://nisar-docs.asf.alaska.edu/",
+      "productos_nisar": "https://nisar-docs.asf.alaska.edu/products-overview/",
+      "postales_uavsar": "https://uavsar.jpl.nasa.gov/education/postcards.html",
+      "introduccion_sar_earthdata": "https://www.earthdata.nasa.gov/learn/earth-observation-data-basics/sar",
+      "arset_nisar_espanol": "https://www.earthdata.nasa.gov/es/learn/trainings/nisar-nuevas-observaciones-de-radar-para-aplicaciones-terrestres",
+      "arset_inundaciones_espanol": "https://www.earthdata.nasa.gov/es/learn/trainings/monitoreo-de-inundaciones-con-sar-para-la-gestion-de-los-recursos-hidricos",
+      "arset_pdfs_espanol": [
+        "https://www.earthdata.nasa.gov/s3fs-public/2026-07/arset-2026-nisar-part2-spanish.pdf",
+        "https://www.earthdata.nasa.gov/s3fs-public/2026-07/arset-2026-nisar-part3-spanish.pdf"
+      ]
+    },
+    "csa": {
+      "mision_rcm": "https://www.asc-csa.gc.ca/eng/satellites/radarsat/",
+      "archivo_abierto_radarsat1": "https://donnees-data.asc-csa.gc.ca/en/dataset/radarsat1",
+      "acceso_datos_radarsat1": "https://www.asc-csa.gc.ca/eng/satellites/radarsat1/data-access.asp",
+      "tutorial_python_sar": "https://github.com/asc-csa/EO-Visualization-and-Search-Tutorial"
+    },
+    "conae": {
+      "catalogo_saocom": "https://catalogos.conae.gov.ar/catalogo/catalogoSaocom.html",
+      "documentacion_banda_l": "https://catalogos.conae.gov.ar/catalogo/catalogoSatSaocomDocs.html",
+      "manual_usuario_saocom_2026_pdf": "https://catalogos.conae.gov.ar/catalogo/docs/SAOCOM/SUM_Espa%C3%B1ol_Enero-2026.pdf",
+      "manual_rgb_saocom_pdf": "https://catalogos.conae.gov.ar/catalogo/docs/saocom/030_CONAE_PRD_SAOCOM_SAR_RGB_ManualUsuarios_e02.pdf"
+    }
+  },
+  "casos_estudio": [
+    {
+      "id": "caso_1_cajamarca_andes",
+      "titulo": "Dinámica de humedales altoandinos y humedad del suelo en Cajamarca",
+      "region": "Cajamarca (Laguna San Nicolás / Namora y Valle de Cajamarca), Perú",
+      "fenomeno": "Expansión/retracción estacional de humedales altoandinos y variación de humedad edáfica",
+      "coordenadas": {
+        "centroide_lat_lon": [-7.2347, -78.3422],
+        "bounding_box_wsen": [-78.60, -7.30, -78.25, -7.05],
+        "wkt_polygon": "POLYGON((-78.60 -7.30, -78.25 -7.30, -78.25 -7.05, -78.60 -7.05, -78.60 -7.30))",
+        "geojson_local": "capas_sig/caso1_cajamarca_aoi.geojson"
+      },
+      "fechas_clave": {
+        "pre_evento_epoca_seca": "2026-07-01 a 2026-08-31",
+        "post_evento_inicio_lluvias": "2026-10-15 a 2026-11-15",
+        "ventana_busqueda_asf": ["2026-07-01T00:00:00Z", "2026-11-15T23:59:59Z"]
+      },
+      "hipotesis_fisica": {
+        "mecanismos_dispersion": "El agua libre en la Laguna San Nicolás y charcas estacionales genera reflexión especular (retrodispersión muy baja, píxeles oscuros). En los bordes de totorales y bofedales inundados, el tallo vertical sobre agua tranquila produce dispersión de doble rebote (double-bounce), elevando drásticamente el retorno radar. En laderas agrícolas y pastizales altoandinos, el incremento de humedad del suelo aumenta la constante dieléctrica y eleva la retrodispersión superficial.",
+        "polarizaciones_optimas": ["HH (sensible a doble rebote en vegetación inundada)", "VV (sensible a rugosidad del agua por viento y humedad superficial del suelo)", "HV (discriminación de biomasa herbácea/arbustiva mediante dispersión volumétrica)"],
+        "aplicaciones_futuras_nisar": "Monitoreo operativo cada 12 días de bofedales y lagunas altoandinas para seguridad hídrica en Cajamarca, alertas tempranas de sequía agrícola mediante el producto L3 SME2 (200 m) y calibración de balances hídricos en cuencas de cabecera."
+      },
+      "productos_sar_recomendados": ["NISAR GCOV (L2)", "NISAR SME2 (L3)", "SAOCOM-1 (Banda L)"],
+      "consulta_asf_api_publica": {
+        "gcov_url": "https://api.daac.asf.alaska.edu/services/search/param?dataset=NISAR&processingLevel=GCOV&intersectsWith=POLYGON((-78.60%20-7.30,-78.25%20-7.30,-78.25%20-7.05,-78.60%20-7.05,-78.60%20-7.30))&start=2026-07-01T00:00:00Z&end=2026-11-15T23:59:59Z&output=json",
+        "sme2_url": "https://api.daac.asf.alaska.edu/services/search/param?dataset=NISAR&processingLevel=SME2&intersectsWith=POLYGON((-78.60%20-7.30,-78.25%20-7.30,-78.25%20-7.05,-78.60%20-7.05,-78.60%20-7.30))&start=2026-07-01T00:00:00Z&end=2026-11-15T23:59:59Z&output=json"
+      },
+      "rutas_locales_esperadas": {
+        "escenas_sar": "datos_sar/caso_1_cajamarca_andes/",
+        "capa_vectorial": "capas_sig/caso1_cajamarca_aoi.geojson"
+      }
+    },
+    {
+      "id": "caso_2_amazonia_madre_de_dios",
+      "titulo": "Deforestación, minería aurífera e incendios en la Selva Amazónica",
+      "region": "Corredor La Pampa / Zona de Amortiguamiento Tambopata, Madre de Dios, Perú",
+      "fenomeno": "Pérdida de cobertura forestal primaria, apertura de pozas mineras y cicatrices de quema",
+      "coordenadas": {
+        "centroide_lat_lon": [-12.90, -69.95],
+        "bounding_box_wsen": [-70.35, -13.15, -69.65, -12.65],
+        "wkt_polygon": "POLYGON((-70.35 -13.15, -69.65 -13.15, -69.65 -12.65, -70.35 -12.65, -70.35 -13.15))",
+        "geojson_local": "capas_sig/caso2_amazonia_madre_de_dios_aoi.geojson"
+      },
+      "fechas_clave": {
+        "pre_evento_epoca_humeda": "2026-02-01 a 2026-04-30",
+        "post_evento_epoca_seca_incendios": "2026-08-01 a 2026-10-31",
+        "ventana_busqueda_asf": ["2026-02-01T00:00:00Z", "2026-10-31T23:59:59Z"]
+      },
+      "hipotesis_fisica": {
+        "mecanismos_dispersion": "El bosque amazónico intacto presenta alta dispersión volumétrica en Banda L (longitud de onda ~23.8 cm que penetra el dosel hasta ramas y troncos). Al producirse tala rasa o incendios intensos, desaparecen los dispersores leñosos volumétricos y la señal cae abruptamente en polarización cruzada (HV), dominando la dispersión superficial del suelo desnudo o reflexión especular en pozas de agua minera.",
+        "polarizaciones_optimas": ["HV (máxima sensibilidad a biomasa leñosa y pérdida de dosel)", "HH (detección de troncos remanentes e inundación bajo bosque / doble rebote)", "Ratio HV/HH (índice robusto de degradación forestal)"],
+        "aplicaciones_futuras_nisar": "Detección temprana de deforestación y degradación por incendios bajo cobertura nubosa persistente (ventaja crítica frente a sensores ópticos), cuantificación de pérdida de carbono forestal y fiscalización ambiental continua."
+      },
+      "productos_sar_recomendados": ["NISAR GCOV (L2)", "UAVSAR PolSAR (Referencia Pacaya-Samiria)"],
+      "consulta_asf_api_publica": {
+        "gcov_url": "https://api.daac.asf.alaska.edu/services/search/param?dataset=NISAR&processingLevel=GCOV&intersectsWith=POLYGON((-70.35%20-13.15,-69.65%20-13.15,-69.65%20-12.65,-70.35%20-12.65,-70.35%20-13.15))&start=2026-02-01T00:00:00Z&end=2026-10-31T23:59:59Z&output=json"
+      },
+      "rutas_locales_esperadas": {
+        "escenas_sar": "datos_sar/caso_2_amazonia_madre_de_dios/",
+        "capa_vectorial": "capas_sig/caso2_amazonia_madre_de_dios_aoi.geojson",
+        "imagen_referencia_uavsar": "imagenes_referencia/uavsar_pacaya_samiria_peru.png"
+      }
+    },
+    {
+      "id": "caso_3_artico_barnes_ice_cap",
+      "titulo": "Movimiento glaciar y fusión estacional en el Ártico Canadiense",
+      "region": "Casquete de Hielo Barnes (Barnes Ice Cap), Isla de Baffin, Nunavut, Canadá",
+      "fenomeno": "Flujo glaciar, transición nieve seca/húmeda y contraste histórico con RADARSAT-1",
+      "coordenadas": {
+        "centroide_lat_lon": [69.95, -73.00],
+        "bounding_box_wsen": [-74.50, 69.40, -71.50, 70.50],
+        "wkt_polygon": "POLYGON((-74.50 69.40, -71.50 69.40, -71.50 70.50, -74.50 70.50, -74.50 69.40))",
+        "geojson_local": "capas_sig/caso3_artico_barnes_ice_cap_aoi.geojson"
+      },
+      "fechas_clave": {
+        "linea_base_historica_radarsat1": "1998-01-01 a 2008-12-31 (archivo abierto CSA)",
+        "pre_deshielo_nisar": "2026-06-17 a 2026-07-15",
+        "pico_fusion_y_recongelamiento_nisar": "2026-08-01 a 2026-10-31",
+        "ventana_busqueda_asf": ["2026-06-17T00:00:00Z", "2026-10-31T23:59:59Z"]
+      },
+      "hipotesis_fisica": {
+        "mecanismos_dispersion": "En invierno (hielo y nieve seca), la Banda L de NISAR penetra varios metros en el firn generando dispersión volumétrica interna estable que preserva la coherencia interferométrica. Durante la fusión estival, el agua líquida en la superficie del glaciar absorbe la energía microondas y reduce drásticamente la retrodispersión (oscurecimiento súbito en la imagen SAR). En Banda C (RADARSAT-1/RCM), la menor longitud de onda (~5.6 cm) es aún más sensible a la rugosidad superficial del hielo marino y grietas.",
+        "polarizaciones_optimas": ["HH (preferida en criósfera y hielo marino por mayor relación señal-ruido frente a agua abierta)", "HV (sensible a hielo multi-anual fracturado y zonas de ablación rugosas)"],
+        "aplicaciones_futuras_nisar": "Mapeo continuo de velocidad superficial de glaciares mediante interferometría y speckle tracking (productos GOFF/GUNW), seguimiento del retroceso de casquetes polares árticos y fusión sinérgica con el archivo histórico de RADARSAT-1 y RCM."
+      },
+      "productos_sar_recomendados": ["NISAR GCOV (L2)", "NISAR GUNW (L2)", "NISAR GOFF (L2)", "RADARSAT-1 (Archivo Abierto CSA/ASF)"],
+      "consulta_asf_api_publica": {
+        "nisar_gcov_url": "https://api.daac.asf.alaska.edu/services/search/param?dataset=NISAR&processingLevel=GCOV&intersectsWith=POLYGON((-74.50%2069.40,-71.50%2069.40,-71.50%2070.50,-74.50%2070.50,-74.50%2069.40))&start=2026-06-17T00:00:00Z&end=2026-10-31T23:59:59Z&output=json",
+        "radarsat1_url": "https://api.daac.asf.alaska.edu/services/search/param?platform=RADARSAT-1&intersectsWith=POLYGON((-74.50%2069.40,-71.50%2069.40,-71.50%2070.50,-74.50%2070.50,-74.50%2069.40))&maxResults=10&output=json"
+      },
+      "rutas_locales_esperadas": {
+        "escenas_sar": "datos_sar/caso_3_artico_barnes_ice_cap/",
+        "capa_vectorial": "capas_sig/caso3_artico_barnes_ice_cap_aoi.geojson"
+      }
+    },
+    {
+      "id": "caso_4_costa_yakarta",
+      "titulo": "Subsidencia costera severa e inundaciones urbanas en Yakarta Norte",
+      "region": "Yakarta Norte y Bahía de Yakarta, Java Occidental, Indonesia",
+      "fenomeno": "Hundimiento del terreno (>10-25 cm/año) por extracción de agua subterránea e inundaciones mareales/fluviales",
+      "coordenadas": {
+        "centroide_lat_lon": [-6.15, 106.82],
+        "bounding_box_wsen": [106.65, -6.30, 107.00, -6.05],
+        "wkt_polygon": "POLYGON((106.65 -6.30, 107.00 -6.30, 107.00 -6.05, 106.65 -6.05, 106.65 -6.30))",
+        "geojson_local": "capas_sig/caso4_costa_yakarta_aoi.geojson"
+      },
+      "fechas_clave": {
+        "pre_evento_temporada_seca": "2026-06-17 a 2026-08-31",
+        "post_evento_monzon_e_insar": "2026-10-01 a 2026-11-15",
+        "ventana_busqueda_asf": ["2026-06-17T00:00:00Z", "2026-11-15T23:59:59Z"]
+      },
+      "hipotesis_fisica": {
+        "mecanismos_dispersion": "Las estructuras urbanas actúan como reflectores de esquina (corner reflectors) estables que mantienen alta coherencia de fase entre pasadas repetidas de NISAR, permitiendo medir desplazamientos verticales milimétricos/centimétricos en interferogramas (GUNW). Durante eventos de inundación urbana o mareal, el agua estancada en calles entre edificios intensifica el mecanismo de doble rebote (aumento súbito de HH/VV), mientras que parques y zonas abiertas inundadas pasan a reflexión especular (caída de señal).",
+        "polarizaciones_optimas": ["HH y VV (máxima coherencia en entorno urbano y contraste de doble rebote en inundación)", "HV (separación de vegetación periurbana frente a infraestructura)"],
+        "aplicaciones_futuras_nisar": "Vigilancia geodésica continua de subsidencia en megaciudades costeras y deltas, mapeo rápido de inundaciones urbanas bajo nubes de tormenta monzónica y planificación de diques de defensa costera."
+      },
+      "productos_sar_recomendados": ["NISAR GUNW (L2)", "NISAR GCOV (L2)"],
+      "consulta_asf_api_publica": {
+        "gunw_url": "https://api.daac.asf.alaska.edu/services/search/param?dataset=NISAR&processingLevel=GUNW&intersectsWith=POLYGON((106.65%20-6.30,107.00%20-6.30,107.00%20-6.05,106.65%20-6.05,106.65%20-6.30))&start=2026-06-17T00:00:00Z&end=2026-11-15T23:59:59Z&output=json",
+        "gcov_url": "https://api.daac.asf.alaska.edu/services/search/param?dataset=NISAR&processingLevel=GCOV&intersectsWith=POLYGON((106.65%20-6.30,107.00%20-6.30,107.00%20-6.05,106.65%20-6.05,106.65%20-6.30))&start=2026-06-17T00:00:00Z&end=2026-11-15T23:59:59Z&output=json"
+      },
+      "rutas_locales_esperadas": {
+        "escenas_sar": "datos_sar/caso_4_costa_yakarta/",
+        "capa_vectorial": "capas_sig/caso4_costa_yakarta_aoi.geojson"
+      }
+    },
+    {
+      "id": "caso_5_volcan_hayli_gubbi",
+      "titulo": "Deformación cortical volcánica por la erupción de Hayli Gubbi (Nov 2025)",
+      "region": "Volcán Hayli Gubbi, Cordillera Erta Ale, Depresión de Afar, Etiopía",
+      "fenomeno": "Erupción explosiva del 23 de noviembre de 2025 y deformación por contracción de dique magmático (primer evento volcánico documentado con NISAR)",
+      "coordenadas": {
+        "centroide_lat_lon": [13.5100, 40.7164],
+        "bounding_box_wsen": [40.40, 13.20, 41.05, 13.80],
+        "wkt_polygon": "POLYGON((40.40 13.20, 41.05 13.20, 41.05 13.80, 40.40 13.80, 40.40 13.20))",
+        "geojson_local": "capas_sig/caso5_volcan_hayli_gubbi_aoi.geojson"
+      },
+      "fechas_clave": {
+        "pre_erupcion": "2025-10-28 a 2025-11-22",
+        "erupcion_y_post_erupcion": "2025-11-23 a 2026-02-28",
+        "ventana_busqueda_asf": ["2025-10-28T00:00:00Z", "2026-02-28T23:59:59Z"]
+      },
+      "hipotesis_fisica": {
+        "mecanismos_dispersion": "El movimiento de la corteza (hundimiento o levantamiento en la línea de visión del radar, LOS) altera la distancia sensor-superficie entre adquisiciones repetidas, produciendo un desplazamiento de fase interferométrica medible en franjas (cada ciclo equivale a media longitud de onda, ~11.9 cm en Banda L). Al mismo tiempo, la deposición de ceniza fresca y nuevos flujos o fracturas modifican la rugosidad superficial y reducen la coherencia interferométrica en el entorno inmediato del cráter.",
+        "polarizaciones_optimas": ["HH o VV (co-polarizaciones estándar para máxima relación señal-ruido en interferometría InSAR GUNW)", "HV (detección de cambios de rugosidad por depósitos piroclásticos o coladas)"],
+        "aplicaciones_futuras_nisar": "Vigilancia volcánica global en zonas remotas sin redes GNSS densas, inversión geodésica de cámaras y diques magmáticos y seguimiento post-eruptivo mediante series temporales GUNW."
+      },
+      "productos_sar_recomendados": ["NISAR GUNW (L2)", "NISAR GCOV (L2)"],
+      "consulta_asf_api_publica": {
+        "gunw_url": "https://api.daac.asf.alaska.edu/services/search/param?dataset=NISAR&processingLevel=GUNW&intersectsWith=POLYGON((40.40%2013.20,41.05%2013.20,41.05%2013.80,40.40%2013.80,40.40%2013.20))&start=2025-10-28T00:00:00Z&end=2026-02-28T23:59:59Z&output=json",
+        "gcov_url": "https://api.daac.asf.alaska.edu/services/search/param?dataset=NISAR&processingLevel=GCOV&intersectsWith=POLYGON((40.40%2013.20,41.05%2013.20,41.05%2013.80,40.40%2013.80,40.40%2013.20))&start=2025-10-28T00:00:00Z&end=2026-02-28T23:59:59Z&output=json"
+      },
+      "rutas_locales_esperadas": {
+        "escenas_sar": "datos_sar/caso_5_volcan_hayli_gubbi/",
+        "capa_vectorial": "capas_sig/caso5_volcan_hayli_gubbi_aoi.geojson"
+      }
+    }
+  ]
+}

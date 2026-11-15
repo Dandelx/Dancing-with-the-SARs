@@ -1,0 +1,200 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Caso 1: Humedales Altoandinos - Cajamarca / Laguna San Nicolas (Peru)",
+        "bbox": [
+          -78.6,
+          -7.3,
+          -78.25,
+          -7.05
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -78.6,
+              -7.3
+            ],
+            [
+              -78.25,
+              -7.3
+            ],
+            [
+              -78.25,
+              -7.05
+            ],
+            [
+              -78.6,
+              -7.05
+            ],
+            [
+              -78.6,
+              -7.3
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Caso 2: Amazonia - La Pampa / Madre de Dios (Peru)",
+        "bbox": [
+          -70.35,
+          -13.15,
+          -69.65,
+          -12.65
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.35,
+              -13.15
+            ],
+            [
+              -69.65,
+              -13.15
+            ],
+            [
+              -69.65,
+              -12.65
+            ],
+            [
+              -70.35,
+              -12.65
+            ],
+            [
+              -70.35,
+              -13.15
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Caso 3: Artico - Barnes Ice Cap, Baffin Island (Canada)",
+        "bbox": [
+          -74.5,
+          69.4,
+          -71.5,
+          70.5
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -74.5,
+              69.4
+            ],
+            [
+              -71.5,
+              69.4
+            ],
+            [
+              -71.5,
+              70.5
+            ],
+            [
+              -74.5,
+              70.5
+            ],
+            [
+              -74.5,
+              69.4
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Caso 4: Zona Costera - Yakarta Norte (Indonesia)",
+        "bbox": [
+          106.65,
+          -6.3,
+          107.0,
+          -6.05
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              106.65,
+              -6.3
+            ],
+            [
+              107.0,
+              -6.3
+            ],
+            [
+              107.0,
+              -6.05
+            ],
+            [
+              106.65,
+              -6.05
+            ],
+            [
+              106.65,
+              -6.3
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Caso 5: Zona Volcanica - Volcan Hayli Gubbi, Afar (Etiopia)",
+        "bbox": [
+          40.4,
+          13.2,
+          41.05,
+          13.8
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              40.4,
+              13.2
+            ],
+            [
+              41.05,
+              13.2
+            ],
+            [
+              41.05,
+              13.8
+            ],
+            [
+              40.4,
+              13.8
+            ],
+            [
+              40.4,
+              13.2
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
