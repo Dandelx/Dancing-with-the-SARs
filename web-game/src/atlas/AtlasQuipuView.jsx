@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import './atlas.css'
+import { getAssetUrl } from '../utils/assetUrl.js'
 import { MISIONES, MISIONES_MAP, RUTAS } from './misionesData.js'
 import { CAMPO } from './campoData.js'
 import { MISSIONS_EN, FIELD_EN } from './englishData.js'
@@ -415,13 +416,13 @@ export default function AtlasQuipuView({ lang, onLanguageChange, mostrarBienveni
         const i = new Image()
         i.onload = () => ok(i)
         i.onerror = () => fail(new Error('No se pudo cargar interior: ' + nombre))
-        i.src = `/atlas/interiores/${nombre}.webp`
+        i.src = getAssetUrl(`/atlas/interiores/${nombre}.webp`)
       })
 
     const inicializarJuego = async () => {
       try {
         await Promise.all([
-          Mundo.cargar('/atlas/mundo/'),
+          Mundo.cargar(getAssetUrl('/atlas/mundo/')),
           ...MISIONES.map(async (m) => {
             gameStateRef.current.interiores[m.id] = await foto(m.id)
           })
@@ -436,7 +437,7 @@ export default function AtlasQuipuView({ lang, onLanguageChange, mostrarBienveni
             : Mundo.inicio
 
         const q = await Quipu.cargar({
-          carpeta: '/atlas/quipu/',
+          carpeta: getAssetUrl('/atlas/quipu/'),
           x: cargaPos[0],
           y: cargaPos[1],
           velocidad: 97,

@@ -1,3 +1,5 @@
+import { getAssetUrl } from '../utils/assetUrl.js'
+
 const FILAS = { frente: 0, izquierda: 1, derecha: 2, espalda: 3 }
 const VECTORES = { frente: [0, 1], izquierda: [-1, 0], derecha: [1, 0], espalda: [0, -1] }
 const DURACION = { saludar: 1.2, saltar: 0.64, explorar: 1.35 }
@@ -13,7 +15,8 @@ function cargarImagen(src) {
 
 export class Quipu {
   static async cargar(opciones = {}) {
-    const basePath = opciones.carpeta || '/atlas/quipu/'
+    const rawBase = opciones.carpeta || getAssetUrl('/atlas/quipu/')
+    const basePath = rawBase.endsWith('/') ? rawBase : `${rawBase}/`
     const [caminata, acciones] = await Promise.all([
       cargarImagen(`${basePath}caminata.png`),
       cargarImagen(`${basePath}acciones.png`)

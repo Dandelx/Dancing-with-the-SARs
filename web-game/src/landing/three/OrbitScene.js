@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { getAssetUrl } from '../../utils/assetUrl.js'
 import {
   createGlowTexture,
   createNisarSatellite,
@@ -392,7 +393,7 @@ export function createOrbitScene(container, options = {}) {
   const textureLoader = new THREE.TextureLoader(manager)
 
   textureLoader.load(
-    '/textures/earth_day.jpg',
+    getAssetUrl('/textures/earth_day.jpg'),
     (texture) => {
       texture.colorSpace = THREE.SRGBColorSpace
       texture.anisotropy = maxAnisotropy
@@ -404,7 +405,7 @@ export function createOrbitScene(container, options = {}) {
   )
 
   textureLoader.load(
-    '/textures/earth_night.png',
+    getAssetUrl('/textures/earth_night.png'),
     (texture) => {
       texture.colorSpace = THREE.SRGBColorSpace
       texture.anisotropy = maxAnisotropy
@@ -416,7 +417,7 @@ export function createOrbitScene(container, options = {}) {
   )
 
   textureLoader.load(
-    '/textures/earth_clouds.png',
+    getAssetUrl('/textures/earth_clouds.png'),
     (texture) => {
       texture.colorSpace = THREE.SRGBColorSpace
       texture.anisotropy = maxAnisotropy
@@ -431,7 +432,7 @@ export function createOrbitScene(container, options = {}) {
   /* Safety net: never leave the PLAY button locked forever. */
   const readyFallback = window.setTimeout(markReady, 5000)
 
-  fetch('/geo/peru.geo.json')
+  fetch(getAssetUrl('/geo/peru.geo.json'))
     .then((response) => (response.ok ? response.json() : null))
     .then((geojson) => {
       if (!geojson) return

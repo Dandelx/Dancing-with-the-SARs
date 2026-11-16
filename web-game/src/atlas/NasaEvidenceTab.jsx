@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import L from 'leaflet'
+import { getAssetUrl } from '../utils/assetUrl.js'
 import { MISSIONS_EN, NASA_EN } from './englishData.js'
 import 'leaflet/dist/leaflet.css'
 import {
@@ -84,7 +85,7 @@ export default function NasaEvidenceTab({ regionId, lang, extrasHost }) {
 
   useEffect(() => {
     let cancelled = false
-    fetch('/data/nasa_real_cases.json')
+    fetch(getAssetUrl('/data/nasa_real_cases.json'))
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
@@ -145,7 +146,8 @@ export default function NasaEvidenceTab({ regionId, lang, extrasHost }) {
 
     // Superposición de imagen radar SAR georreferenciada sobre el AOI
     const bbox = regionData.coordenadas?.bounding_box_wsen
-    const sarSrc = regionData.browse_hh || regionData.browse_latlon
+    const rawSar = regionData.browse_hh || regionData.browse_latlon
+    const sarSrc = getAssetUrl(rawSar)
     if (showSarOverlay && bbox && sarSrc) {
       const [w, s, e, n] = bbox
       const sarOverlay = L.imageOverlay(sarSrc, [[s, w], [n, e]], {
@@ -250,7 +252,8 @@ export default function NasaEvidenceTab({ regionId, lang, extrasHost }) {
     }
 
     const bbox = regionData?.coordenadas?.bounding_box_wsen
-    const sarSrc = regionData?.browse_hh || regionData?.browse_latlon
+    const rawSar = regionData?.browse_hh || regionData?.browse_latlon
+    const sarSrc = getAssetUrl(rawSar)
 
     if (showSarOverlay && bbox && sarSrc) {
       const [w, s, e, n] = bbox
@@ -289,10 +292,12 @@ export default function NasaEvidenceTab({ regionId, lang, extrasHost }) {
 
   // Rutas de imágenes disponibles
   const resolveChannelUrl = (ch) => {
-    if (ch === 'hh') return regionData.browse_hh || currentScene?.browse_hh
-    if (ch === 'hv') return regionData.browse_hv || currentScene?.browse_hv
-    if (ch === 'latlon') return regionData.browse_latlon || currentScene?.browse_latlon
-    return currentScene?.imagen_principal || regionData.browse_latlon
+    let raw = null
+    if (ch === 'hh') raw = regionData.browse_hh || currentScene?.browse_hh
+    else if (ch === 'hv') raw = regionData.browse_hv || currentScene?.browse_hv
+    else if (ch === 'latlon') raw = regionData.browse_latlon || currentScene?.browse_latlon
+    else raw = currentScene?.imagen_principal || regionData.browse_latlon
+    return getAssetUrl(raw)
   }
 
   const leftImgSrc = resolveChannelUrl(leftChannel)

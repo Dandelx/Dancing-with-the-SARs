@@ -1,3 +1,5 @@
+import { getAssetUrl } from '../utils/assetUrl.js'
+
 const datos = {
   grid: [
     "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
@@ -223,7 +225,9 @@ function salto(x, y, direccion, resueltas) {
   return null
 }
 
-async function cargar(basePath = '/atlas/mundo/') {
+async function cargar(basePath) {
+  const rawBase = basePath || getAssetUrl('/atlas/mundo/')
+  const cleanBase = rawBase.endsWith('/') ? rawBase : `${rawBase}/`
   await Promise.all(
     ['paisaje', ...ids].map(
       (nombre) =>
@@ -234,7 +238,7 @@ async function cargar(basePath = '/atlas/mundo/') {
             ok()
           }
           im.onerror = () => fail(new Error('No se pudo cargar el paisaje: ' + nombre))
-          im.src = `${basePath}${nombre}.webp`
+          im.src = `${cleanBase}${nombre}.webp`
         })
     )
   )
