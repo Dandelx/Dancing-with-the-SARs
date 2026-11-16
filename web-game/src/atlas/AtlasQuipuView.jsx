@@ -2,34 +2,100 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import './atlas.css'
 import { MISIONES, MISIONES_MAP, RUTAS } from './misionesData.js'
 import { CAMPO } from './campoData.js'
-import { dibujarRadar, obtenerLeyenda } from './radarEngine.js'
+import { MISSIONS_EN, FIELD_EN } from './englishData.js'
 import { Quipu } from './quipuCharacter.js'
 import { Mundo } from './mundoEngine.js'
 import LaboratorioView from './LaboratorioView.jsx'
 import NasaEvidenceTab from './NasaEvidenceTab.jsx'
+import TriviaQuipu from './TriviaQuipu.jsx'
+import QuipuWelcome from './QuipuWelcome.jsx'
 import WorldMapModal from './WorldMapModal.jsx'
 import TopBar from '../landing/components/TopBar.jsx'
 import LanguageSelect from '../landing/components/LanguageSelect.jsx'
 import AudioControl from '../landing/components/AudioControl.jsx'
-import { detectLanguage, getStrings } from '../landing/i18n.js'
+import { getStrings } from '../landing/i18n.js'
 import audio from '../landing/audio/audioEngine.js'
-import { Orbit, Compass, Sparkles } from 'lucide-react'
+import { Orbit, Compass, Check } from 'lucide-react'
 
-const STORAGE_KEY = 'quipu.mundo.abierto.v2'
+// Keep progress only while this page is open, including trips back to orbit.
+// A reload or a new visit starts a fresh expedition.
+let progresoSesion = {}
 
 function cargarProgreso() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : {}
-  } catch {
-    return {}
-  }
+  return progresoSesion
 }
 
-export default function AtlasQuipuView({ onReturnToOrbit }) {
+function englishStatus(text) {
+  let result = text
+  for (const mission of MISIONES) {
+    const en = MISSIONS_EN[mission.id]
+    for (const key of ['lugar', 'leccion', 'cierre']) {
+      if (mission[key]) result = result.replace(mission[key], en[key])
+    }
+    CAMPO[mission.id].notas.forEach((note, i) => { result = result.replace(note, FIELD_EN[mission.id].notas[i]) })
+    result = result.replace(CAMPO[mission.id].instruccion, FIELD_EN[mission.id].instruccion)
+  }
+  const phrases = {
+    'Abriendo la expedición…': 'Opening the expedition…',
+    'Bitácora completada. QIPU tiene unas preguntas para ti.': 'Field journal complete. QIPU has some questions for you.',
+    'Quipu levanta la pata. ': 'Quipu waves. ', 'El equipo le devuelve el saludo.': 'The team waves back.', 'El sendero continúa.': 'The path continues.',
+    'Consultando el cuaderno del refugio…': 'Checking the shelter journal…', 'Quipu saca la lupa de exploración SAR…': 'Quipu takes out the SAR magnifying glass…',
+    'Investiga con E en el interior. La salida está al sur.': 'Press E to investigate inside. The exit is to the south.',
+    'Hay dos registros en la bitácora. Busca las marcas de campo con la ayuda de la carta.': 'There are two field records. Use the map to find the field markers.',
+    ' Completa la tarea de la bitácora en el Laboratorio.': ' Open field notes to complete the activity.',
+    'La lupa señala los puntos aún pendientes. Consulta el minimapa.': 'The magnifying glass points to remaining clues. Check the minimap.',
+    'Usa E para abrir el radar. Camina con WASD / flechas; pulsa M para la carta.': 'Press E to inspect radar. Move with WASD or arrows; press M for the map.',
+    'Caso reabierto. Usa E para recuperar las observaciones.': 'Case reopened. Press E to collect observations.',
+    'Archivo de Namora': 'Namora archive', 'Cabaña del dosel': 'Canopy cabin', 'Refugio de Bafín': 'Baffin shelter', 'Archivo del puerto': 'Harbor archive', 'Observatorio del domo': 'Dome observatory',
+    'Error al cargar el mundo de Quipu:': 'Could not load Quipu’s world:',
+    'Salida al sur · E para consultar el refugio': 'Exit south · press E to inspect the shelter',
+    'Caso resuelto · pulsa M para explorar otra región': 'Case solved · press M to explore another region',
+    ' casillas': ' tiles', 'Amazonía': 'Amazon', 'Bafín': 'Baffin', 'Yakarta': 'Jakarta', 'Destino': 'Destination'
+  }
+  for (const [es, en] of Object.entries(phrases)) result = result.replace(es, en)
+  result = result.replace(/^Regresas al camino de (.*)\.$/, 'Returning to the path at $1.')
+  result = result.replace(/^Llegaste a (.*)\. Usa E para investigar el caso SAR\.$/, 'Arrived at $1. Press E to investigate the SAR case.')
+  return result
+}
+
+function DialogoJuego({ titulo, onCerrar, children, clase = '', atajoCerrar }) {
+  const panelRef = useRef(null)
+  useEffect(() => {
+    const anterior = document.activeElement
+    panelRef.current?.focus()
+    return () => anterior?.focus?.()
+  }, [])
+
+  const manejarTeclado = (event) => {
+    if ((event.key === 'Escape' || (atajoCerrar && event.key.toLowerCase() === atajoCerrar && !event.target.closest('input, textarea, select'))) && onCerrar) {
+      event.preventDefault()
+      event.stopPropagation()
+      onCerrar()
+    }
+    if (event.key !== 'Tab') return
+    const botones = [...panelRef.current.querySelectorAll('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled)')]
+    if (!botones.length) { event.preventDefault(); return }
+    if (event.shiftKey && (document.activeElement === botones[0] || document.activeElement === panelRef.current)) {
+      event.preventDefault()
+      botones.at(-1).focus()
+    } else if (!event.shiftKey && document.activeElement === botones.at(-1)) {
+      event.preventDefault()
+      botones[0].focus()
+    }
+  }
+  return (
+    <div className="juego-dialogo-fondo">
+      <section className={`juego-dialogo ${clase}`} role="dialog" aria-modal="true" aria-label={titulo} tabIndex={-1} ref={panelRef} onKeyDown={manejarTeclado}>
+        {children}
+      </section>
+    </div>
+  )
+}
+
+export default function AtlasQuipuView({ lang, onLanguageChange, mostrarBienvenida, onTutorialFinish, onReturnToOrbit }) {
   // TopBar & audio state
-  const [lang, setLang] = useState(detectLanguage)
   const t = getStrings(lang)
+  const en = lang === 'en'
   const [volume, setVolume] = useState(() => {
     try {
       const v = Number(localStorage.getItem('orbitjump.volume'))
@@ -50,7 +116,8 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
       inicial[m.id] = {
         radar: !!s?.radar,
         muestras: s ? Number(s.muestras) & 3 : 0,
-        resuelto: !!s?.resuelto
+        resuelto: !!s?.resuelto,
+        triviaPendiente: !!s?.triviaPendiente
       }
     }
     return inicial
@@ -64,7 +131,13 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
     return res
   })
 
-  const [radarModo, setRadarModo] = useState('cambio') // 'antes' | 'despues' | 'cambio' | 'nasa'
+  const [triviaRegion, setTriviaRegion] = useState(null)
+  const [bienvenidaOpen, setBienvenidaOpen] = useState(() => mostrarBienvenida)
+  const [apuntesOpen, setApuntesOpen] = useState(false)
+  const [nasaExtrasHost, setNasaExtrasHost] = useState(null)
+  const [panelInfo, setPanelInfo] = useState(null)
+  const [notificacion, setNotificacion] = useState(null)
+  const evidenciaRef = useRef(null)
   const [mensaje, setMensaje] = useState('Abriendo la expedición…')
   const [ubicacionTexto, setUbicacionTexto] = useState('')
   const [lugarTitulo, setLugarTitulo] = useState('Laguna San Nicolás')
@@ -76,11 +149,12 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
   const [destino, setDestino] = useState(null)
   const [cortinaActiva, setCortinaActiva] = useState(false)
   const [quipuPos, setQuipuPos] = useState(Mundo.inicio)
+  const triviaActiva = triviaRegion === currentRegionId || (!estados[currentRegionId]?.resuelto && !!estados[currentRegionId]?.triviaPendiente)
+  const dialogoAbiertoRef = useRef(bienvenidaOpen)
 
   // Refs for canvas and game loop
   const mainCanvasRef = useRef(null)
   const miniMapaRef = useRef(null)
-  const syntheticRadarCanvasRef = useRef(null)
 
   // Mutable game loop references to avoid recreating animations
   const gameStateRef = useRef({
@@ -110,15 +184,32 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
     gameStateRef.current.destino = destino
   }, [estados, resueltas, currentRegionId, destino])
 
+  useEffect(() => {
+    dialogoAbiertoRef.current = bienvenidaOpen || apuntesOpen || triviaActiva
+    if (dialogoAbiertoRef.current) gameStateRef.current.teclas.clear()
+  }, [bienvenidaOpen, apuntesOpen, triviaActiva])
+
+  const cerrarBienvenida = useCallback(() => {
+    setBienvenidaOpen(false)
+    onTutorialFinish?.()
+  }, [onTutorialFinish])
+
+  useEffect(() => {
+    if (!notificacion) return
+    const timer = window.setTimeout(() => setNotificacion(null), 6000)
+    return () => window.clearTimeout(timer)
+  }, [notificacion])
+
+  const abrirEvidencia = useCallback(() => {
+    if (!gameStateRef.current.estados[gameStateRef.current.id]?.radar) return
+    setPanelInfo(prev => prev === 'evidencia' ? null : 'evidencia')
+  }, [])
+
   // Save progress helper
   const guardar = useCallback(() => {
     const gs = gameStateRef.current
-    try {
-      const pos = gs.adentro ? gs.retorno : gs.quipu ? [Math.round(gs.quipu.x), Math.round(gs.quipu.y)] : Mundo.inicio
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ estados: gs.estados, pos }))
-    } catch {
-      /* ignore */
-    }
+    const pos = gs.adentro ? gs.retorno : gs.quipu ? [Math.round(gs.quipu.x), Math.round(gs.quipu.y)] : Mundo.inicio
+    progresoSesion = { estados: Object.fromEntries(Object.entries(gs.estados).map(([id, estado]) => [id, { ...estado }])), pos }
   }, [])
 
   // Refugiar player if trapped in changed landscape
@@ -160,10 +251,41 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
     audio.sfx('ready')
   }, [guardar, refugiar])
 
+  const iniciarTrivia = useCallback(() => {
+    const gs = gameStateRef.current
+    const s = gs.estados[gs.id]
+    if (!s) return
+    if (!s.resuelto) {
+      s.triviaPendiente = true
+      setEstados({ ...gs.estados })
+      guardar()
+      setNotificacion({ titulo: '¡Bitácora completada!', texto: 'Resuelve la trivia de QIPU para cerrar el caso.' })
+    }
+    setApuntesOpen(false)
+    setTriviaRegion(gs.id)
+    setMensaje('Bitácora completada. QIPU tiene unas preguntas para ti.')
+  }, [guardar])
+
+  const finalizarTrivia = useCallback(() => {
+    const gs = gameStateRef.current
+    const s = gs.estados[gs.id]
+    const casoNuevo = s && !s.resuelto
+    if (s) s.triviaPendiente = false
+    terminarCaso()
+    if (s?.resuelto) {
+      setEstados({ ...gs.estados })
+      guardar()
+    }
+    setTriviaRegion(null)
+    setPanelInfo('evidencia')
+    if (casoNuevo) setNotificacion({ titulo: '¡Caso resuelto!', texto: 'Ya puedes explorar las observaciones NASA / ASF.' })
+    window.setTimeout(() => evidenciaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
+  }, [guardar, terminarCaso])
+
   // Action executor
   const ejecutarAccion = useCallback((accion) => {
     const gs = gameStateRef.current
-    if (gs.cortina || cartaOpen || !gs.quipu) return
+    if (gs.cortina || cartaOpen || dialogoAbiertoRef.current || !gs.quipu) return
     if (!gs.quipu.hacer(accion)) return
 
     if (accion === 'saludar') {
@@ -340,7 +462,7 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
           const canvas = mainCanvasRef.current
           const ctx = canvas ? canvas.getContext('2d') : null
 
-          if (!gs.cortina && !cartaOpenRef.current && gs.quipu) {
+          if (!gs.cortina && !cartaOpenRef.current && !dialogoAbiertoRef.current && gs.quipu) {
             const direccion = Array.from(gs.teclas.values()).at(-1) || null
             const legalInterior = (x, y) =>
               (x >= 76 && x <= 289 && y >= 139 && y <= 211) ||
@@ -518,7 +640,8 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
     }
 
     const onKeyDown = (e) => {
-      if (e.altKey || e.ctrlKey || e.metaKey) return
+      if (e.altKey || e.ctrlKey || e.metaKey || e.target?.closest('input, select, textarea, [contenteditable="true"]')) return
+      if (dialogoAbiertoRef.current) return
       const k = e.key.toLowerCase()
 
       if (k === 'm') {
@@ -544,6 +667,23 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
       }
 
       if (cartaOpen || e.target?.tagName === 'INPUT') return
+
+      if (!e.repeat && k === 'p') {
+        e.preventDefault()
+        setApuntesOpen(true)
+        return
+      }
+      if (!e.repeat && k === 'n') {
+        e.preventDefault()
+        abrirEvidencia()
+        return
+      }
+      if (!e.repeat && k === 'c' && gameStateRef.current.estados[gameStateRef.current.id]?.resuelto) {
+        e.preventDefault()
+        setPanelInfo(prev => prev === 'conclusion' ? null : 'conclusion')
+        return
+      }
+      if (e.target?.closest('button, a')) return
 
       if (Object.hasOwn(dirsMap, k)) {
         e.preventDefault()
@@ -580,18 +720,7 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
       window.removeEventListener('blur', onBlur)
       window.removeEventListener('pagehide', guardar)
     }
-  }, [cartaOpen, ejecutarAccion, guardar])
-
-  // Draw synthetic radar when active
-  useEffect(() => {
-    if (radarModo === 'nasa') return
-    const canvas = syntheticRadarCanvasRef.current
-    const m = MISIONES_MAP.get(currentRegionId)
-    const s = estados[currentRegionId]
-    if (canvas && m && s?.radar) {
-      dibujarRadar(canvas, m, radarModo)
-    }
-  }, [currentRegionId, estados, radarModo])
+  }, [abrirEvidencia, cartaOpen, ejecutarAccion, guardar])
 
   // Audio handlers
   const handleVolumeChange = (val) => {
@@ -621,9 +750,10 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
   }
 
   // Active mission & status info
-  const misionActual = MISIONES_MAP.get(currentRegionId) || MISIONES[0]
+  const misionBase = MISIONES_MAP.get(currentRegionId) || MISIONES[0]
+  const misionActual = en ? { ...misionBase, ...MISSIONS_EN[currentRegionId] } : misionBase
   const estadoActual = estados[currentRegionId] || { radar: false, muestras: 0, resuelto: false }
-  const campoActual = CAMPO[currentRegionId]
+  const campoActual = en ? FIELD_EN[currentRegionId] : CAMPO[currentRegionId]
 
   return (
     <div className="atlas-container">
@@ -633,12 +763,12 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
           type="button"
           className="orbit-return-btn"
           onClick={handleReturnOrbit}
-          title="Regresar a la visualización 3D en órbita"
+          title={en ? 'Return to the 3D orbit' : 'Regresar a la visualización 3D en órbita'}
         >
           <Orbit size={15} />
-          <span>Órbita 3D</span>
+          <span>{en ? '3D Orbit' : 'Órbita 3D'}</span>
         </button>
-        <LanguageSelect lang={lang} onChange={setLang} t={t} />
+        <LanguageSelect lang={lang} onChange={onLanguageChange} t={t} />
         <AudioControl
           volume={volume}
           muted={muted}
@@ -651,17 +781,13 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
       {/* Sub-header with avatar & title */}
       <div className="atlas-subnav">
         <div className="atlas-brand">
-          <div className="atlas-avatar" aria-hidden="true">
-            <i />
-          </div>
           <div className="atlas-title-group">
-            <p>Mundo Abierto SAR &bull; Quipu</p>
-            <h1>Atlas del Eco</h1>
+            <h1>Orbit Jump</h1>
           </div>
         </div>
         <div className="atlas-progress-badge">
           <strong>{resueltas.size} / 5</strong>
-          <span>Casos Resueltos</span>
+          <span>{en ? 'Cases solved' : 'Casos resueltos'}</span>
         </div>
       </div>
 
@@ -672,8 +798,12 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
           <div className="visor-header">
             <div className="visor-location">
               <span className="location-diamond" aria-hidden="true" />
-              <span>{lugarTitulo}</span>
+              <span>{en ? misionActual.lugar : lugarTitulo}</span>
             </div>
+            <div className="visor-header-actions">
+            <button type="button" className="apuntes-trigger" onClick={() => setApuntesOpen(true)}>
+              {en ? 'Field notes' : 'Apuntes de campo'} <kbd>P</kbd>{estadoActual.muestras === 3 && !estadoActual.resuelto ? ' •' : ''}
+            </button>
             <button
               type="button"
               className="carta-trigger-btn"
@@ -681,11 +811,12 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
                 audio.sfx('click')
                 setCartaOpen(true)
               }}
-              title="Abrir carta del mundo (M)"
+              title={en ? 'Open world map (M)' : 'Abrir carta del mundo (M)'}
             >
               <Compass size={14} className="inline mr-1" />
-              Carta <kbd>M</kbd>
+              {en ? 'Map' : 'Carta'} <kbd>M</kbd>
             </button>
+            </div>
           </div>
 
           <div className="visor-viewport">
@@ -695,27 +826,27 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
               height={256}
               className="atlas-main-canvas"
               tabIndex={0}
-              aria-label="Mundo abierto de Quipu. Camina con las flechas o WASD."
+              aria-label={en ? 'Quipu’s open world. Move with the arrow keys or WASD.' : 'Mundo abierto de Quipu. Camina con las flechas o WASD.'}
             />
             <div className={`viewport-curtain ${cortinaActiva ? 'is-active' : ''}`} />
-            {ubicacionTexto && <div className="viewport-hud">{ubicacionTexto}</div>}
+            {ubicacionTexto && <div className="viewport-hud">{en ? englishStatus(ubicacionTexto) : ubicacionTexto}</div>}
           </div>
 
           <div className="visor-status" role="status">
             <b>Quipu:</b>
-            <span>{mensaje}</span>
+            <span>{en ? englishStatus(mensaje) : mensaje}</span>
           </div>
 
           {/* Controls Bar: D-Pad & Actions */}
           <div className="visor-controls-bar">
-            <div className="dpad-container" aria-label="Mover a Quipu">
+            <div className="dpad-container" aria-label={en ? 'Move Quipu' : 'Mover a Quipu'}>
               <div />
               <button
                 type="button"
                 className="dpad-btn"
                 onPointerDown={() => gameStateRef.current.teclas.set('pad_up', 'espalda')}
                 onPointerUp={() => gameStateRef.current.teclas.delete('pad_up')}
-                aria-label="Arriba"
+                aria-label={en ? 'Up' : 'Arriba'}
               >
                 ↑
               </button>
@@ -725,7 +856,7 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
                 className="dpad-btn"
                 onPointerDown={() => gameStateRef.current.teclas.set('pad_left', 'izquierda')}
                 onPointerUp={() => gameStateRef.current.teclas.delete('pad_left')}
-                aria-label="Izquierda"
+                aria-label={en ? 'Left' : 'Izquierda'}
               >
                 ←
               </button>
@@ -734,7 +865,7 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
                 className="dpad-btn"
                 onPointerDown={() => gameStateRef.current.teclas.set('pad_down', 'frente')}
                 onPointerUp={() => gameStateRef.current.teclas.delete('pad_down')}
-                aria-label="Abajo"
+                aria-label={en ? 'Down' : 'Abajo'}
               >
                 ↓
               </button>
@@ -743,7 +874,7 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
                 className="dpad-btn"
                 onPointerDown={() => gameStateRef.current.teclas.set('pad_right', 'derecha')}
                 onPointerUp={() => gameStateRef.current.teclas.delete('pad_right')}
-                aria-label="Derecha"
+                aria-label={en ? 'Right' : 'Derecha'}
               >
                 →
               </button>
@@ -755,33 +886,33 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
                 className="action-btn primario"
                 onClick={() => ejecutarAccion('explorar')}
               >
-                Investigar <kbd>E</kbd>
+                {en ? 'Investigate' : 'Investigar'} <kbd>E</kbd>
               </button>
               <button
                 type="button"
                 className="action-btn"
                 onClick={() => ejecutarAccion('saltar')}
               >
-                Saltar <kbd>J</kbd>
+                {en ? 'Jump' : 'Saltar'} <kbd>J</kbd>
               </button>
               <button
                 type="button"
                 className="action-btn"
                 onClick={() => ejecutarAccion('saludar')}
               >
-                Saludar <kbd>H</kbd>
+                {en ? 'Wave' : 'Saludar'} <kbd>H</kbd>
               </button>
             </div>
           </div>
 
           <details className="visor-help">
-            <summary>Guía de controles de la expedición</summary>
+            <summary>{en ? 'Expedition controls' : 'Guía de controles de la expedición'}</summary>
             <p>
-              Muévete con las flechas o <strong>WASD</strong>. Acércate a una pista o al refugio e investiga con <strong>E</strong>.
-              Mira hacia un obstáculo bajo y pulsa <strong>J</strong> para saltar. Cruza la marca azul de una puerta para entrar al refugio.
-              En cada región recoge los indicios y resuelve la tarea en la bitácora. Pulsa <strong>M</strong> para la Carta del Mundo.
+              {en ? 'Move with the arrow keys or WASD. Approach a clue or shelter and press E to investigate. Press J to jump, P for field notes, N for NASA data and M for the map.' : 'Muévete con las flechas o WASD. Acércate a una pista o al refugio e investiga con E. Pulsa J para saltar, P para los apuntes, N para los datos NASA y M para la carta.'}
             </p>
+            <button type="button" className="welcome-replay" onClick={() => setBienvenidaOpen(true)}>{en ? 'Show welcome' : 'Ver bienvenida'}</button>
           </details>
+          <div className="nasa-game-extras" ref={setNasaExtrasHost} />
         </div>
 
         {/* Right: Notebook (Bitácora) */}
@@ -793,19 +924,19 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
               width={156}
               height={94}
               className="minimap-canvas"
-              aria-label="Minimapa con la posición de Quipu"
+              aria-label={en ? 'Minimap showing Quipu’s position' : 'Minimapa con la posición de Quipu'}
             />
             <div className="orient-text">
-              <h3>Orientación SAR</h3>
-              <p>El punto blanco eres tú. El marco dorado señala tu destino.</p>
+              <h3>{en ? 'SAR navigation' : 'Orientación SAR'}</h3>
+              <p>{en ? 'The white dot is you. The gold outline marks your destination.' : 'El punto blanco eres tú. El marco dorado señala tu destino.'}</p>
             </div>
           </div>
 
           {/* Cuaderno de Campo */}
           <article className="atlas-notebook-card">
             <div className="notebook-folio">
-              <span>Bitácora SAR</span>
-              <span>{RUTAS[currentRegionId]}</span>
+              <span>{en ? 'SAR field journal' : 'Bitácora SAR'}</span>
+              <span>{en ? ({ andes: 'Andes', amazonia: 'Amazon', bafin: 'Baffin', yakarta: 'Jakarta', volcan: 'Hayli Gubbi' })[currentRegionId] : RUTAS[currentRegionId]}</span>
             </div>
 
             <h2 className="notebook-title">{misionActual.titulo}</h2>
@@ -814,136 +945,52 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
             <div className="notebook-phase-banner">
               <b>
                 {estadoActual.resuelto
-                  ? 'Caso Resuelto'
+                  ? (en ? 'Case solved' : 'Caso Resuelto')
                   : !estadoActual.radar
-                    ? 'Primera Observación'
+                    ? (en ? 'First observation' : 'Primera Observación')
                     : estadoActual.muestras !== 3
-                      ? `Muestreo de Campo · ${(estadoActual.muestras & 1) + (estadoActual.muestras >> 1)}/2`
-                      : 'Mesa de Interpretación'}
+                      ? `${en ? 'Field samples' : 'Muestreo de Campo'} · ${(estadoActual.muestras & 1) + (estadoActual.muestras >> 1)}/2`
+                      : (en ? 'Interpretation desk' : 'Mesa de Interpretación')}
               </b>
               <p>
                 {estadoActual.resuelto
                   ? resueltas.size === 5
-                    ? '¡Atlas completo! Has resuelto todos los misterios SAR.'
-                    : `${misionActual.efecto}. Elige otro destino en la carta.`
+                    ? (en ? 'Expedition complete! You solved every SAR case.' : '¡Atlas completo! Has resuelto todos los misterios SAR.')
+                    : `${misionActual.efecto}. ${en ? 'Choose another destination on the map.' : 'Elige otro destino en la carta.'}`
                   : !estadoActual.radar
-                    ? 'Usa E para consultar las dos pasadas del radar SAR de esta región.'
+                    ? (en ? 'Press E to begin investigating this region.' : 'Usa E para comenzar a investigar esta región.')
                     : estadoActual.muestras !== 3
-                      ? `Investiga con E: ${campoActual.puntos.filter((_, i) => !(estadoActual.muestras & (1 << i))).join(' y ')}.`
-                      : `${campoActual.titulo}. Usa el laboratorio abajo para completar el trabajo.`}
+                      ? `${en ? 'Investigate with E' : 'Investiga con E'}: ${campoActual.puntos.filter((_, i) => !(estadoActual.muestras & (1 << i))).join(en ? ' and ' : ' y ')}.`
+                      : `${campoActual.titulo}. ${en ? 'Press P to open your field notes.' : 'Abre los apuntes de campo con P para completar el trabajo.'}`}
               </p>
             </div>
 
-            {/* Radar Evidence Section */}
-            {estadoActual.radar && (
-              <section className="notebook-section">
-                <h3>Evidencias y Lecturas de Radar</h3>
-                <div className="evidence-tabs-bar">
-                  <button
-                    type="button"
-                    className={`ev-tab-btn ${radarModo === 'antes' ? 'is-active' : ''}`}
-                    onClick={() => {
-                      audio.sfx('click')
-                      setRadarModo('antes')
-                    }}
-                  >
-                    Antes
-                  </button>
-                  <button
-                    type="button"
-                    className={`ev-tab-btn ${radarModo === 'despues' ? 'is-active' : ''}`}
-                    onClick={() => {
-                      audio.sfx('click')
-                      setRadarModo('despues')
-                    }}
-                  >
-                    Después
-                  </button>
-                  <button
-                    type="button"
-                    className={`ev-tab-btn ${radarModo === 'cambio' ? 'is-active' : ''}`}
-                    onClick={() => {
-                      audio.sfx('click')
-                      setRadarModo('cambio')
-                    }}
-                  >
-                    Cambio
-                  </button>
-                  <button
-                    type="button"
-                    className={`ev-tab-btn is-nasa ${radarModo === 'nasa' ? 'is-active' : ''}`}
-                    onClick={() => {
-                      audio.sfx('click')
-                      setRadarModo('nasa')
-                    }}
-                  >
-                    <Sparkles size={12} className="inline mr-1" />
-                    Datos Reales NASA / ASF
-                  </button>
-                </div>
-
-                {radarModo === 'nasa' ? (
-                  <NasaEvidenceTab key={currentRegionId} regionId={currentRegionId} />
-                ) : (
-                  <div>
-                    <canvas
-                      ref={syntheticRadarCanvasRef}
-                      width={256}
-                      height={104}
-                      className="radar-canvas-view"
-                      aria-label="Visualización SAR simulada"
-                    />
-                    <p className="radar-legend">{obtenerLeyenda(misionActual, radarModo)}</p>
-
-                    <div className="radar-readings-grid">
-                      <div className="reading-cell">
-                        <small>{misionActual.fecha1}</small>
-                        <b>
-                          {misionActual.antes} {misionActual.unidad}
-                        </b>
-                      </div>
-                      <div className="reading-cell">
-                        <small>{misionActual.fecha2}</small>
-                        <b>
-                          {misionActual.despues} {misionActual.unidad}
-                        </b>
-                      </div>
-                    </div>
-
-                    <p className="radar-pista">{misionActual.pista}</p>
-                  </div>
-                )}
-              </section>
+            <div className="notebook-navigation" aria-label={en ? 'Field journal information' : 'Información de la bitácora'}>
+              <button type="button" disabled={!estadoActual.radar} aria-expanded={panelInfo === 'evidencia'} onClick={abrirEvidencia}>
+                <span>{en ? 'NASA / ASF data' : 'Datos NASA / ASF'}</span><kbd>N</kbd>
+              </button>
+              {estadoActual.resuelto && <button type="button" aria-expanded={panelInfo === 'conclusion'} onClick={() => setPanelInfo(prev => prev === 'conclusion' ? null : 'conclusion')}>
+                <span>{en ? 'Conclusion' : 'Conclusión'}</span><kbd>C</kbd>
+              </button>}
+            </div>
+            {!estadoActual.radar && <p className="notebook-field-hint">{en ? 'Investigate the first observation to unlock NASA / ASF data.' : 'Investiga la primera observación para desbloquear los datos NASA / ASF.'}</p>}
+            {estadoActual.resuelto && triviaRegion !== currentRegionId && (
+              <button type="button" className="notebook-replay-trivia" onClick={iniciarTrivia}>{en ? 'Play the trivia again' : 'Volver a responder la trivia'}</button>
             )}
 
-            {/* Field Samples Notes */}
-            {Boolean(estadoActual.muestras) && (
-              <section className="notebook-section">
-                <h3>Apunte de Campo</h3>
-                <p className="field-notes-text">
-                  {campoActual.notas.filter((_, i) => estadoActual.muestras & (1 << i)).join(' ')}
-                </p>
-              </section>
-            )}
-
-            {/* Interactive Laboratory Minigame */}
-            {estadoActual.muestras === 3 && !estadoActual.resuelto && (
-              <section className="notebook-section">
-                <h3>{campoActual.titulo}</h3>
-                <p className="text-xs text-[var(--nb-muted)] mb-2">{campoActual.instruccion}</p>
-                <LaboratorioView
-                  key={currentRegionId}
-                  regionId={currentRegionId}
-                  onCompletado={terminarCaso}
-                />
+            {/* NASA / ASF observation for the current region */}
+            {estadoActual.radar && panelInfo === 'evidencia' && (
+              <section className="notebook-section" ref={evidenciaRef}>
+                <h3>{en ? 'NASA / ASF observations' : 'Observaciones NASA / ASF'}</h3>
+                <NasaEvidenceTab key={currentRegionId} regionId={currentRegionId} lang={lang} extrasHost={nasaExtrasHost} />
               </section>
             )}
 
             {/* Resolved Case Conclusion */}
-            {estadoActual.resuelto && (
+            {estadoActual.resuelto && panelInfo === 'conclusion' && (
               <section className="notebook-section">
                 <div className="resolution-block">
-                  <h3>Conclusión del Caso</h3>
+                  <h3>{en ? 'Case conclusion' : 'Conclusión del Caso'}</h3>
                   <p>{misionActual.cierre}</p>
                   <div className="resolution-actions">
                     <button
@@ -966,7 +1013,7 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
                         setMensaje('Caso reabierto. Usa E para recuperar las observaciones.')
                       }}
                     >
-                      Repetir este caso
+                      {en ? 'Replay this case' : 'Repetir este caso'}
                     </button>
                     <button
                       type="button"
@@ -976,7 +1023,7 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
                         setCartaOpen(true)
                       }}
                     >
-                      Consultar la Carta &rarr;
+                      {en ? 'Open map' : 'Consultar la Carta'} &rarr;
                     </button>
                   </div>
                 </div>
@@ -986,8 +1033,50 @@ export default function AtlasQuipuView({ onReturnToOrbit }) {
         </aside>
       </div>
 
+      {bienvenidaOpen && (
+        <DialogoJuego titulo={en ? 'Welcome to the expedition' : 'Bienvenida a la expedición'} onCerrar={cerrarBienvenida} clase="welcome-dialogo">
+          <QuipuWelcome lang={lang} onFinish={cerrarBienvenida} />
+        </DialogoJuego>
+      )}
+      {apuntesOpen && !triviaActiva && !bienvenidaOpen && (
+        <DialogoJuego titulo={en ? 'Field notes' : 'Apuntes de campo'} onCerrar={() => setApuntesOpen(false)} atajoCerrar="p" clase="campo-dialogo">
+          <header className="campo-dialogo-header">
+            <div><span>{en ? ({ andes: 'Andes', amazonia: 'Amazon', bafin: 'Baffin', yakarta: 'Jakarta', volcan: 'Hayli Gubbi' })[currentRegionId] : RUTAS[currentRegionId]}</span><h2>{en ? 'Field notes' : 'Apuntes de campo'}</h2></div>
+            <button type="button" className="campo-cerrar" onClick={() => setApuntesOpen(false)} aria-label={en ? 'Close field notes' : 'Cerrar apuntes de campo'}>×</button>
+          </header>
+          {estadoActual.muestras ? (
+            <div className="campo-pistas">
+              <h3>{en ? 'Observations collected' : 'Observaciones recogidas'}</h3>
+              {campoActual.notas.filter((_, i) => estadoActual.muestras & (1 << i)).map((nota) => <p key={nota}>{nota}</p>)}
+            </div>
+          ) : <p className="campo-vacio">{en ? 'No notes yet. Investigate the field markers to collect clues.' : 'Todavía no hay apuntes. Investiga las marcas de campo para recoger pistas.'}</p>}
+          {estadoActual.muestras !== 3 && !estadoActual.resuelto && <p className="campo-progreso">{en ? 'Clues found' : 'Pistas encontradas'}: {(estadoActual.muestras & 1) + (estadoActual.muestras >> 1)} {en ? 'of 2. Investigate both markers to unlock the activity.' : 'de 2. Investiga ambas marcas para desbloquear la actividad.'}</p>}
+          {estadoActual.muestras === 3 && !estadoActual.resuelto && (
+            <div className="campo-actividad">
+              <h3>{campoActual.titulo}</h3>
+              <p>{campoActual.instruccion}</p>
+              <LaboratorioView key={`${currentRegionId}-${lang}`} regionId={currentRegionId} lang={lang} onCompletado={iniciarTrivia} />
+            </div>
+          )}
+          {estadoActual.resuelto && <div className="campo-actividad"><p>{en ? 'This case is already solved.' : 'Este caso ya está resuelto.'}</p><button type="button" className="lab-btn primario" onClick={iniciarTrivia}>{en ? 'Play QIPU’s trivia' : 'Responder la trivia de QIPU'}</button></div>}
+        </DialogoJuego>
+      )}
+      {triviaActiva && !bienvenidaOpen && (
+        <DialogoJuego titulo={en ? 'QIPU’s trivia' : 'Trivia de QIPU'} clase="trivia-dialogo-juego">
+          <TriviaQuipu key={currentRegionId} regionId={currentRegionId} lang={lang} onFinalizar={finalizarTrivia} />
+        </DialogoJuego>
+      )}
+
+      {notificacion && (
+        <div className="bitacora-notificacion" role="status" aria-live="polite">
+          <span className="bitacora-notificacion-icon" aria-hidden="true"><Check size={19} /></span>
+          <div><strong>{en ? (notificacion.titulo === '¡Caso resuelto!' ? 'Case solved!' : 'Field journal complete!') : notificacion.titulo}</strong><p>{en ? (notificacion.titulo === '¡Caso resuelto!' ? 'Explore the NASA / ASF observations.' : 'Answer QIPU’s trivia to complete the case.') : notificacion.texto}</p></div>
+        </div>
+      )}
+
       {/* World Map Modal */}
       <WorldMapModal
+        lang={lang}
         isOpen={cartaOpen}
         onClose={() => setCartaOpen(false)}
         misiones={MISIONES}

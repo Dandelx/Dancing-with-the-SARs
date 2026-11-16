@@ -40,8 +40,8 @@ const STRINGS = {
     eyebrow: 'NASA Space Apps Challenge · Dancing with the SARs',
     tagline:
       'Acompaña al NISAR sobre los Andes y salta desde la órbita al corazón del Perú.',
-    play: 'PLAY',
-    hint: 'Pulsa Enter o haz clic en PLAY',
+    play: 'JUGAR',
+    hint: 'Pulsa Enter o haz clic en JUGAR',
     preparing: 'Calibrando órbita…',
     peruLabel: 'Perú · objetivo NISAR',
     language: 'Idioma',

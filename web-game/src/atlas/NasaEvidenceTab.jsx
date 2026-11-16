@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import L from 'leaflet'
+import { MISSIONS_EN, NASA_EN } from './englishData.js'
 import 'leaflet/dist/leaflet.css'
 import {
   ArrowLeftRight,
@@ -10,7 +12,6 @@ import {
   Layers,
   Map,
   Orbit,
-  Radio,
   Satellite,
   Sliders
 } from 'lucide-react'
@@ -58,11 +59,11 @@ const GUIAS_FISICAS = {
   }
 }
 
-export default function NasaEvidenceTab({ regionId }) {
+export default function NasaEvidenceTab({ regionId, lang, extrasHost }) {
+  const en = lang === 'en'
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [selectedSceneIdx, setSelectedSceneIdx] = useState(0)
 
   // Capa base seleccionada: 'satellite' (Esri World Imagery) o 'osm' (OpenStreetMap)
   const [basemapLayer, setBasemapLayer] = useState('satellite')
@@ -85,7 +86,7 @@ export default function NasaEvidenceTab({ regionId }) {
     let cancelled = false
     fetch('/data/nasa_real_cases.json')
       .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status} al cargar datos NASA`)
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
       })
       .then((json) => {
@@ -107,7 +108,10 @@ export default function NasaEvidenceTab({ regionId }) {
 
   const regionData = data?.[regionId]
   const escenas = regionData?.escenas || []
-  const currentScene = escenas[selectedSceneIdx] || escenas[0]
+  const previewSource = regionData?.vistas?.find((vista) => vista.id === 'hh')?.archivo_origen
+    || regionData?.vistas?.find((vista) => vista.id === 'latlon')?.archivo_origen
+  const currentScene = escenas.find((escena) => escena.granuleName && previewSource?.includes(escena.granuleName))
+  const sameScene = currentScene && regionData?.vistas?.every((vista) => vista.archivo_origen?.includes(currentScene.granuleName))
   const guia = GUIAS_FISICAS[regionId] || GUIAS_FISICAS.andes
 
   // Inicialización y ciclo de vida del mapa Leaflet
@@ -173,7 +177,7 @@ export default function NasaEvidenceTab({ regionId }) {
     L.marker(centroide, { icon: targetIcon })
       .addTo(map)
       .bindPopup(
-        `<b style="color:#05060d;">${regionData.region_oficial}</b><br><small style="color:#333;">Lat: ${centroide[0].toFixed(4)}, Lon: ${centroide[1].toFixed(4)}</small>`
+        `<b style="color:#05060d;">${en ? NASA_EN[regionId].region : regionData.region_oficial}</b><br><small style="color:#333;">Lat: ${centroide[0].toFixed(4)}, Lon: ${centroide[1].toFixed(4)}</small>`
       )
 
     // Polígono GeoJSON AOI con borde dorado luminoso y relleno cian semitransparente
@@ -213,7 +217,7 @@ export default function NasaEvidenceTab({ regionId }) {
         mapInstanceRef.current = null
       }
     }
-  }, [regionData]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [regionData, en, regionId, extrasHost]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Cambio dinámico de capa base (Esri vs OSM) sin reiniciar el mapa
   useEffect(() => {
@@ -267,7 +271,7 @@ export default function NasaEvidenceTab({ regionId }) {
       <div className="nasa-tab-loading">
         <Satellite className="animate-spin text-[var(--oj-gold-2)]" size={24} />
         <p className="mt-2 text-xs font-mono text-[var(--oj-ink)]">
-          Cargando catálogo satelital NASA ASF...
+          {en ? 'Loading NASA / ASF satellite catalog…' : 'Cargando catálogo satelital NASA ASF...'}
         </p>
       </div>
     )
@@ -277,7 +281,7 @@ export default function NasaEvidenceTab({ regionId }) {
     return (
       <div className="nasa-tab-error">
         <p className="text-xs text-rose-400">
-          No se pudieron cargar los datos reales: {error || 'Región no encontrada'}
+          {en ? 'Could not load observation data: ' : 'No se pudieron cargar los datos reales: '}{error || (en ? 'Region not found' : 'Región no encontrada')}
         </p>
       </div>
     )
@@ -302,13 +306,14 @@ export default function NasaEvidenceTab({ regionId }) {
   }
 
   const formatChannelLabel = (ch) => {
-    if (ch === 'hh') return 'Canal HH (Co-Polarizado)'
-    if (ch === 'hv') return 'Canal HV (Cruzado)'
-    if (ch === 'latlon') return 'Vista Previa LatLon'
+    if (ch === 'hh') return en ? 'HH channel (co-polarized)' : 'Canal HH (Co-Polarizado)'
+    if (ch === 'hv') return en ? 'HV channel (cross-polarized)' : 'Canal HV (Cruzado)'
+    if (ch === 'latlon') return en ? 'LatLon preview' : 'Vista Previa LatLon'
     return ch.toUpperCase()
   }
 
   return (
+    <>
     <div className="nasa-evidence-view">
       {/* Encabezado Oficial de la Región */}
       <div className="nasa-header-card">
@@ -316,16 +321,16 @@ export default function NasaEvidenceTab({ regionId }) {
           <div className="flex items-center gap-2">
             <Satellite size={16} className="text-[var(--oj-gold-2)]" />
             <span className="text-[10px] uppercase font-mono tracking-wider text-[var(--oj-gold-2)]">
-              Misión NISAR &bull; Observaciones Reales NASA / ASF
+              {en ? 'NISAR mission · NASA / ASF observations' : 'Misión NISAR · Observaciones Reales NASA / ASF'}
             </span>
           </div>
-          <span className="nasa-live-badge">Banda L &bull; 23.8 cm</span>
+          <span className="nasa-live-badge">{en ? 'L-band' : 'Banda L'} &bull; 23.8 cm</span>
         </div>
         <h4 className="text-sm font-semibold text-[var(--oj-ink)] mt-1">
-          {regionData.titulo}
+          {en ? MISSIONS_EN[regionId].titulo : regionData.titulo}
         </h4>
         <p className="text-xs text-[var(--oj-muted)]">
-          {regionData.region_oficial}
+          {en ? NASA_EN[regionId].region : regionData.region_oficial}
         </p>
       </div>
 
@@ -335,7 +340,7 @@ export default function NasaEvidenceTab({ regionId }) {
           <div className="flex items-center gap-2">
             <Sliders size={14} className="text-[var(--oj-cyan)]" />
             <span className="text-xs font-mono font-bold uppercase text-[var(--oj-ink)]">
-              Visor Polarimétrico SAR
+              {en ? 'SAR polarization viewer' : 'Visor Polarimétrico SAR'}
             </span>
           </div>
 
@@ -347,14 +352,14 @@ export default function NasaEvidenceTab({ regionId }) {
               onClick={() => setViewMode('comparer')}
             >
               <ArrowLeftRight size={12} className="inline mr-1" />
-              Comparador Dividido (HH / HV)
+              {en ? 'Split comparison (HH / HV)' : 'Comparador Dividido (HH / HV)'}
             </button>
             <button
               type="button"
               className={`mode-pill ${viewMode === 'single' ? 'is-active' : ''}`}
               onClick={() => setViewMode('single')}
             >
-              Canal Único
+              {en ? 'Single channel' : 'Canal Único'}
             </button>
           </div>
         </div>
@@ -365,15 +370,15 @@ export default function NasaEvidenceTab({ regionId }) {
             {/* Controles del comparador */}
             <div className="comparator-controls-bar">
               <div className="channel-select-group">
-                <span className="control-label">Izquierda:</span>
+                <span className="control-label">{en ? 'Left:' : 'Izquierda:'}</span>
                 <select
                   value={leftChannel}
                   onChange={(e) => setLeftChannel(e.target.value)}
                   className="channel-select"
                 >
-                  <option value="hh">Canal HH (Co-Pol)</option>
-                  <option value="hv">Canal HV (Cruzado)</option>
-                  <option value="latlon">LatLon Overview</option>
+                  <option value="hh">{en ? 'HH channel (co-pol)' : 'Canal HH (Co-Pol)'}</option>
+                  <option value="hv">{en ? 'HV channel (cross-pol)' : 'Canal HV (Cruzado)'}</option>
+                  <option value="latlon">{en ? 'LatLon overview' : 'Vista general LatLon'}</option>
                 </select>
               </div>
 
@@ -381,22 +386,22 @@ export default function NasaEvidenceTab({ regionId }) {
                 type="button"
                 onClick={swapChannels}
                 className="swap-channels-btn"
-                title="Invertir canales izquierdo y derecho"
+                title={en ? 'Swap left and right channels' : 'Invertir canales izquierdo y derecho'}
               >
                 <ArrowLeftRight size={13} />
-                <span>Invertir</span>
+                <span>{en ? 'Swap' : 'Invertir'}</span>
               </button>
 
               <div className="channel-select-group">
-                <span className="control-label">Derecha:</span>
+                <span className="control-label">{en ? 'Right:' : 'Derecha:'}</span>
                 <select
                   value={rightChannel}
                   onChange={(e) => setRightChannel(e.target.value)}
                   className="channel-select"
                 >
-                  <option value="hv">Canal HV (Cruzado)</option>
-                  <option value="hh">Canal HH (Co-Pol)</option>
-                  <option value="latlon">LatLon Overview</option>
+                  <option value="hv">{en ? 'HV channel (cross-pol)' : 'Canal HV (Cruzado)'}</option>
+                  <option value="hh">{en ? 'HH channel (co-pol)' : 'Canal HH (Co-Pol)'}</option>
+                  <option value="latlon">{en ? 'LatLon overview' : 'Vista general LatLon'}</option>
                 </select>
               </div>
 
@@ -478,14 +483,14 @@ export default function NasaEvidenceTab({ regionId }) {
                 value={sliderPos}
                 onChange={(e) => setSliderPos(Number(e.target.value))}
                 className="nasa-split-slider"
-                aria-label="Arrastra para comparar canales polarimétricos SAR"
+                aria-label={en ? 'Drag to compare SAR polarization channels' : 'Arrastra para comparar canales polarimétricos SAR'}
               />
               <div className="slider-legend">
                 <span className="legend-left font-mono text-[11px] text-[var(--oj-gold-1)]">
                   {leftChannel.toUpperCase()}: {sliderPos}%
                 </span>
                 <span className="legend-center font-mono text-[10px] text-[var(--oj-muted)]">
-                  Arrastra el deslizador para comparar dispersión
+                  {en ? 'Drag to compare backscatter' : 'Arrastra el deslizador para comparar dispersión'}
                 </span>
                 <span className="legend-right font-mono text-[11px] text-[var(--oj-cyan)]">
                   {rightChannel.toUpperCase()}: {100 - sliderPos}%
@@ -498,16 +503,16 @@ export default function NasaEvidenceTab({ regionId }) {
               <div className="flex items-start gap-2">
                 <Info size={15} className="text-[var(--oj-gold-2)] shrink-0 mt-0.5" />
                 <div className="text-xs">
-                  <p className="font-semibold text-[var(--oj-gold-light)] mb-1">
-                    Análisis de Dispersión Física en esta Escena:
+                  <p className="nasa-analysis-title font-semibold mb-1">
+                    {en ? 'Scattering guide:' : 'Análisis de Dispersión Física en esta Escena:'}
                   </p>
-                  <p className="text-[var(--oj-muted)] mb-1.5">{guia.resumen}</p>
+                  <p className="text-[var(--oj-muted)] mb-1.5">{en ? NASA_EN[regionId].resumen : guia.resumen}</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2 pt-2 border-t border-[rgba(255,255,255,0.08)]">
                     <span className="text-[11px] text-[#e0e6f5]">
-                      <strong className="text-[var(--oj-gold-1)]">HH:</strong> {guia.canalHH}
+                      <strong className="text-[var(--oj-gold-1)]">HH:</strong> {en ? NASA_EN[regionId].hh : guia.canalHH}
                     </span>
                     <span className="text-[11px] text-[#e0e6f5]">
-                      <strong className="text-[var(--oj-cyan)]">HV:</strong> {guia.canalHV}
+                      <strong className="text-[var(--oj-cyan)]">HV:</strong> {en ? NASA_EN[regionId].hv : guia.canalHV}
                     </span>
                   </div>
                 </div>
@@ -524,7 +529,7 @@ export default function NasaEvidenceTab({ regionId }) {
                   className={`channel-btn ${singleChannel === 'latlon' ? 'is-active' : ''}`}
                   onClick={() => setSingleChannel('latlon')}
                 >
-                  Vista LatLon
+                  {en ? 'LatLon view' : 'Vista LatLon'}
                 </button>
               )}
               {regionData.browse_hh && (
@@ -533,7 +538,7 @@ export default function NasaEvidenceTab({ regionId }) {
                   className={`channel-btn ${singleChannel === 'hh' ? 'is-active' : ''}`}
                   onClick={() => setSingleChannel('hh')}
                 >
-                  Canal HH (Co-Pol)
+                  {en ? 'HH channel (co-pol)' : 'Canal HH (Co-Pol)'}
                 </button>
               )}
               {regionData.browse_hv && (
@@ -542,7 +547,7 @@ export default function NasaEvidenceTab({ regionId }) {
                   className={`channel-btn ${singleChannel === 'hv' ? 'is-active' : ''}`}
                   onClick={() => setSingleChannel('hv')}
                 >
-                  Canal HV (Cruzado)
+                  {en ? 'HV channel (cross-pol)' : 'Canal HV (Cruzado)'}
                 </button>
               )}
             </div>
@@ -551,13 +556,13 @@ export default function NasaEvidenceTab({ regionId }) {
               {singleImgSrc ? (
                 <img
                   src={singleImgSrc}
-                  alt={`Vista ${singleChannel} real`}
+                  alt={en ? `${singleChannel} observation` : `Vista ${singleChannel} real`}
                   className="nasa-radar-image"
                   loading="lazy"
                 />
               ) : (
                 <div className="p-4 text-center text-xs text-[var(--oj-muted)]">
-                  Vista no disponible
+                  {en ? 'View unavailable' : 'Vista no disponible'}
                 </div>
               )}
             </div>
@@ -571,7 +576,7 @@ export default function NasaEvidenceTab({ regionId }) {
           <div className="nasa-preview-header">
             <div>
               <span className="text-[10px] font-mono uppercase text-[var(--oj-cyan)] block">
-                Ficha Técnica Satelital &bull; {currentScene.producto}
+                {en ? 'Satellite details' : 'Ficha Técnica Satelital'} &bull; {currentScene.producto}
               </span>
               <span className="text-xs font-mono font-bold text-[var(--oj-ink)] break-all">
                 {currentScene.granuleName}
@@ -583,10 +588,10 @@ export default function NasaEvidenceTab({ regionId }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="nasa-download-btn"
-                title="Descargar producto oficial HDF5 en Alaska Satellite Facility"
+                title={en ? 'Download the official HDF5 product from Alaska Satellite Facility' : 'Descargar producto oficial HDF5 en Alaska Satellite Facility'}
               >
                 <Download size={12} />
-                <span>Descargar HDF5</span>
+                <span>{en ? 'Download HDF5' : 'Descargar HDF5'}</span>
                 <ExternalLink size={11} />
               </a>
             )}
@@ -595,13 +600,13 @@ export default function NasaEvidenceTab({ regionId }) {
           {/* Grilla de Metadatos de la Escena */}
           <div className="scene-metadata-grid">
             <div className="meta-item">
-              <span className="meta-label">Nivel de Proceso:</span>
+              <span className="meta-label">{en ? 'Processing level:' : 'Nivel de Proceso:'}</span>
               <span className="meta-value font-mono">
                 {currentScene.processingLevel} (Geocoded Covariance Matrix)
               </span>
             </div>
             <div className="meta-item">
-              <span className="meta-label">Fecha y Hora UTC:</span>
+              <span className="meta-label">{en ? 'Date and time UTC:' : 'Fecha y Hora UTC:'}</span>
               <span className="meta-value font-mono">
                 {currentScene.startTime
                   ? currentScene.startTime.replace('T', ' ').replace('Z', ' UTC')
@@ -609,46 +614,31 @@ export default function NasaEvidenceTab({ regionId }) {
               </span>
             </div>
             <div className="meta-item">
-              <span className="meta-label">Polarización:</span>
+              <span className="meta-label">{en ? 'Polarization:' : 'Polarización:'}</span>
               <span className="meta-value font-mono text-[var(--oj-cyan)]">
                 {currentScene.polarizaciones || 'Dual-Pol (HH + HV)'}
               </span>
             </div>
             <div className="meta-item">
-              <span className="meta-label">Paso Orbital:</span>
+              <span className="meta-label">{en ? 'Orbit direction:' : 'Paso Orbital:'}</span>
               <span className="meta-value font-mono">
-                {currentScene.orbita || 'Descendente'}
+                {en ? (currentScene.orbita === 'Ascendente' ? 'Ascending' : currentScene.orbita === 'Descendente' ? 'Descending' : currentScene.orbita) : (currentScene.orbita || 'Descendente')}
               </span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Selector de Escenas si hay varias */}
-      {escenas.length > 1 && (
-        <div className="nasa-scenes-block">
-          <label className="nasa-block-title">
-            <Radio size={14} className="text-[var(--oj-cyan)] inline mr-1" />
-            Catálogo de Escenas NISAR L2 GCOV (Alaska Satellite Facility):
-          </label>
-          <div className="nasa-scenes-pills">
-            {escenas.map((esc, i) => (
-              <button
-                key={esc.granuleName}
-                type="button"
-                className={`nasa-scene-pill ${i === selectedSceneIdx ? 'is-active' : ''}`}
-                onClick={() => setSelectedSceneIdx(i)}
-              >
-                <div className="pill-date">
-                  {esc.startTime ? esc.startTime.substring(0, 10) : `Escena ${i + 1}`}
-                </div>
-                <div className="pill-pol">{esc.polarizaciones}</div>
-                <div className="pill-orb">{esc.orbita}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <p className="nasa-preview-note">
+        {sameScene
+          ? (en ? 'The images above show the scene identified in the satellite details.' : 'Las imágenes corresponden a la escena identificada en la ficha satelital.')
+          : (en ? 'Some preview images could not be matched to the scene in the satellite details.' : 'Algunas vistas previas no se pudieron asociar con la escena de la ficha satelital.')}
+      </p>
+
+    </div>
+
+    {extrasHost && createPortal(
+    <div className="nasa-extras-layout">
 
       {/* Mapa Interactivo Leaflet con AOI y Coordenadas */}
       <div className="nasa-map-wrapper">
@@ -656,7 +646,7 @@ export default function NasaEvidenceTab({ regionId }) {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
               <span className="text-[11px] font-mono font-bold text-[var(--oj-gold-1)]">
-                Área de Interés (AOI) &bull; Polígono Satelital
+                {en ? 'Area of interest (AOI) · satellite polygon' : 'Área de Interés (AOI) · Polígono Satelital'}
               </span>
               {regionData.coordenadas?.centroide_lat_lon && (
                 <span className="text-[10px] font-mono text-[var(--oj-muted)] ml-2">
@@ -673,19 +663,19 @@ export default function NasaEvidenceTab({ regionId }) {
                   type="button"
                   className={`map-layer-btn ${basemapLayer === 'satellite' ? 'is-active' : ''}`}
                   onClick={() => setBasemapLayer('satellite')}
-                  title="Vista Satelital Óptica Esri World Imagery"
+                  title={en ? 'Esri World Imagery satellite view' : 'Vista Satelital Óptica Esri World Imagery'}
                 >
                   <Globe size={11} className="inline mr-1" />
-                  Satélite (Esri)
+                  {en ? 'Satellite (Esri)' : 'Satélite (Esri)'}
                 </button>
                 <button
                   type="button"
                   className={`map-layer-btn ${basemapLayer === 'osm' ? 'is-active' : ''}`}
                   onClick={() => setBasemapLayer('osm')}
-                  title="Mapa Base Callejero OpenStreetMap (Modo Oscuro)"
+                  title={en ? 'OpenStreetMap base map' : 'Mapa Base Callejero OpenStreetMap (Modo Oscuro)'}
                 >
                   <Map size={11} className="inline mr-1" />
-                  Mapa Base (OSM)
+                  {en ? 'Base map (OSM)' : 'Mapa Base (OSM)'}
                 </button>
               </div>
 
@@ -693,7 +683,7 @@ export default function NasaEvidenceTab({ regionId }) {
                 type="button"
                 className={`map-sar-toggle-btn ${showSarOverlay ? 'is-active' : ''}`}
                 onClick={() => setShowSarOverlay(!showSarOverlay)}
-                title="Superponer imagen radar SAR georreferenciada sobre el mapa"
+                title={en ? 'Show the SAR preview over the map' : 'Superponer imagen radar SAR sobre el mapa'}
               >
                 <Layers size={11} className="inline mr-1" />
                 <span>Radar SAR {showSarOverlay ? 'ON' : 'OFF'}</span>
@@ -710,24 +700,24 @@ export default function NasaEvidenceTab({ regionId }) {
         <div className="flex items-center gap-1.5 text-[var(--oj-gold-2)] mb-2">
           <Layers size={15} />
           <h5 className="text-xs uppercase font-mono font-bold tracking-wider">
-            Hipótesis Física y Aplicaciones Científicas NISAR
+            {en ? 'Physical interpretation and NISAR applications' : 'Hipótesis Física y Aplicaciones Científicas NISAR'}
           </h5>
         </div>
 
         {regionData.hipotesis_fisica?.mecanismos_dispersion && (
           <div className="science-item">
-            <span className="science-label">Mecanismos Físicos de Dispersión:</span>
+            <span className="science-label">{en ? 'Scattering mechanisms:' : 'Mecanismos Físicos de Dispersión:'}</span>
             <p className="science-text">
-              {regionData.hipotesis_fisica.mecanismos_dispersion}
+              {en ? NASA_EN[regionId].science : regionData.hipotesis_fisica.mecanismos_dispersion}
             </p>
           </div>
         )}
 
         {regionData.hipotesis_fisica?.polarizaciones_optimas && (
           <div className="science-item mt-2">
-            <span className="science-label">Polarizaciones Recomendadas:</span>
+            <span className="science-label">{en ? 'Suggested polarizations:' : 'Polarizaciones Recomendadas:'}</span>
             <ul className="science-list">
-              {regionData.hipotesis_fisica.polarizaciones_optimas.map((pol) => (
+              {(en ? NASA_EN[regionId].polarizations : regionData.hipotesis_fisica.polarizaciones_optimas).map((pol) => (
                 <li key={pol}>{pol}</li>
               ))}
             </ul>
@@ -736,21 +726,21 @@ export default function NasaEvidenceTab({ regionId }) {
 
         {regionData.hipotesis_fisica?.aplicaciones_futuras_nisar && (
           <div className="science-item mt-2">
-            <span className="science-label">Impacto y Aplicación Operativa NISAR:</span>
+            <span className="science-label">{en ? 'Potential applications:' : 'Impacto y Aplicación Operativa NISAR:'}</span>
             <p className="science-text">
-              {regionData.hipotesis_fisica.aplicaciones_futuras_nisar}
+              {en ? NASA_EN[regionId].applications : regionData.hipotesis_fisica.aplicaciones_futuras_nisar}
             </p>
           </div>
         )}
 
         {regionData.productos_recomendados?.length > 0 && (
           <div className="science-item mt-2">
-            <span className="science-label">Productos Oficiales Recomendados:</span>
+            <span className="science-label">{en ? 'Suggested products:' : 'Productos Oficiales Recomendados:'}</span>
             <div className="flex flex-wrap gap-1 mt-1">
               {regionData.productos_recomendados.map((prod) => (
                 <span key={prod} className="nasa-chip">
                   <Orbit size={11} className="inline mr-1" />
-                  {prod}
+                  {en ? prod.replace('Banda L', 'L-band').replace('Archivo Abierto', 'Open Archive').replace('Referencia', 'Reference') : prod}
                 </span>
               ))}
             </div>
@@ -758,5 +748,7 @@ export default function NasaEvidenceTab({ regionId }) {
         )}
       </div>
     </div>
+    , extrasHost)}
+    </>
   )
 }

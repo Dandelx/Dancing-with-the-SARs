@@ -1,16 +1,31 @@
-# React + Vite
+# Orbit Jump
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Juego educativo sobre observaciones SAR y NISAR. La aplicación utiliza React, Vite, Three.js y Leaflet; los metadatos y vistas previas satelitales proceden del catálogo ASF.
 
-Currently, two official plugins are available:
+## Ejecutar
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Desde esta carpeta:
 
-## React Compiler
+```bash
+npm ci
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Para comprobar el proyecto:
 
-## Expanding the Oxlint configuration
+```bash
+npm run lint
+npm run build
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+En PowerShell, si la política de ejecución bloquea `npm.ps1`, se puede usar `npm.cmd` en los comandos anteriores.
+
+## Datos y pipeline
+
+`public/data/nasa_real_cases.json` y `public/data/sar_browse/` contienen los metadatos y vistas previas usados por la aplicación. Los datos originales y el exportador están en `../pipeline-python/`. Para regenerar los archivos web se requieren las dependencias de `../pipeline-python/requirements.txt` y se ejecuta:
+
+```bash
+python ../pipeline-python/exportar_datos_web.py
+```
+
+Las escenas de campo y sus cifras son parte de las actividades del juego. No deben interpretarse automáticamente como mediciones derivadas de las vistas previas satelitales.

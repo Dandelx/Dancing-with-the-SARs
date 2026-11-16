@@ -1,7 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import audio from '../landing/audio/audioEngine.js'
 
-export default function LaboratorioView({ regionId, onCompletado }) {
+export default function LaboratorioView({ regionId, lang, onCompletado }) {
+  const en = lang === 'en'
+  const translate = (value) => en ? ({
+    'Laguna principal': 'Main lagoon', 'Canal obstruido': 'Blocked channel', 'Poza': 'Pool',
+    'Domo con señal': 'Dome with signal', 'Punto exterior estable': 'Stable external point', 'Segunda marca dentro del domo': 'Second point inside the dome', 'Ladera sin referencia previa': 'Slope without a reference',
+    '¡Excelente! Canal despejado.': 'Excellent! The channel is clear.', '¡Parcela delimitada correctamente!': 'Plot correctly marked!', '¡Red geodésica configurada!': 'Monitoring network configured!',
+    'Un sensor debe estar en la zona que cambió y el otro sobre una referencia estable.': 'Place one sensor in the changed area and the other on a stable reference.',
+    '¡Picos alineados! Desplazamiento confirmado: 12 m.': 'Peaks aligned! Displacement: 12 m.',
+    'Los picos aún no coinciden. Desplaza la línea turquesa hasta la línea dorada.': 'The peaks do not line up yet. Move the turquoise line to the gold line.',
+    '¡Nivelación registrada! Altura final: 982 mm.': 'Level recorded! Final height: 982 mm.',
+    'Revisa la lectura del peldaño. La nivelación y la medición del radar están en direcciones diferentes.': 'Check the step reading. Ground leveling and radar measure different directions.',
+    'Comprueba el signo y la magnitud. Las caídas de al menos 5 dB delimitan el claro en este ejemplo.': 'Check the sign and magnitude. Decreases of at least 5 dB mark the clearing in this example.'
+  }[value] || value) : value
   const [mensaje, setMensaje] = useState('')
 
   // Andes
@@ -101,10 +113,10 @@ export default function LaboratorioView({ regionId, onCompletado }) {
     audio.sfx('click')
     if (nombre !== secuenciaAndes[pasoAndes]) {
       setMensaje(
-        'Sigue la corriente. ' +
+        (en ? 'Follow the water. ' : 'Sigue la corriente. ') +
           (pasoAndes === 0
-            ? 'Empieza donde había agua en las dos fechas.'
-            : 'Busca el siguiente tramo aguas abajo.')
+            ? (en ? 'Start where water was present on both dates.' : 'Empieza donde había agua en las dos fechas.')
+            : (en ? 'Find the next downstream section.' : 'Busca el siguiente tramo aguas abajo.'))
       )
       return
     }
@@ -115,7 +127,7 @@ export default function LaboratorioView({ regionId, onCompletado }) {
       setMensaje('¡Excelente! Canal despejado.')
       onCompletado()
     } else {
-      setMensaje(secuenciaAndes.slice(0, nuevoPaso).join(' → ') + ' → …')
+      setMensaje(secuenciaAndes.slice(0, nuevoPaso).map(translate).join(' → ') + ' → …')
     }
   }
 
@@ -126,7 +138,7 @@ export default function LaboratorioView({ regionId, onCompletado }) {
       const next = new Set(prev)
       if (next.has(idx)) next.delete(idx)
       else next.add(idx)
-      setMensaje(`${next.size} de 3 seleccionados.`)
+      setMensaje(en ? `${next.size} of 3 selected.` : `${next.size} de 3 seleccionados.`)
       return next
     })
   }
@@ -154,7 +166,7 @@ export default function LaboratorioView({ regionId, onCompletado }) {
       const next = new Set(prev)
       if (next.has(idx)) next.delete(idx)
       else next.add(idx)
-      setMensaje(`${next.size} de 2 seleccionados.`)
+      setMensaje(en ? `${next.size} of 2 selected.` : `${next.size} de 2 seleccionados.`)
       return next
     })
   }
@@ -206,7 +218,7 @@ export default function LaboratorioView({ regionId, onCompletado }) {
     <div className="lab-box">
       {regionId === 'andes' && (
         <div className="lab-opciones">
-          <p className="lab-hint">Toca las zonas en orden hidrológico:</p>
+          <p className="lab-hint">{en ? 'Select the areas in water-flow order:' : 'Toca las zonas en orden hidrológico:'}</p>
           <div className="flex gap-2 flex-wrap">
             {['Poza', 'Laguna principal', 'Canal obstruido'].map((nom) => {
               const completado = secuenciaAndes.slice(0, pasoAndes).includes(nom)
@@ -218,7 +230,7 @@ export default function LaboratorioView({ regionId, onCompletado }) {
                   disabled={completado}
                   onClick={() => handleAndesClick(nom)}
                 >
-                  {nom}
+                  {translate(nom)}
                 </button>
               )
             })}
@@ -242,7 +254,7 @@ export default function LaboratorioView({ regionId, onCompletado }) {
             ))}
           </div>
           <button type="button" className="lab-btn primario mt-3" onClick={validarAmazonia}>
-            Delimitar parcela
+            {en ? 'Mark plot' : 'Delimitar parcela'}
           </button>
         </div>
       )}
@@ -258,12 +270,12 @@ export default function LaboratorioView({ regionId, onCompletado }) {
                 aria-pressed={selVolcan.has(i)}
                 onClick={() => toggleVolcan(i)}
               >
-                {txt}
+                {translate(txt)}
               </button>
             ))}
           </div>
           <button type="button" className="lab-btn primario mt-3" onClick={validarVolcan}>
-            Instalar estaciones
+            {en ? 'Install stations' : 'Instalar estaciones'}
           </button>
         </div>
       )}
@@ -277,13 +289,13 @@ export default function LaboratorioView({ regionId, onCompletado }) {
             className="perfil-canvas"
             aria-label={
               regionId === 'bafin'
-                ? 'Perfiles de la grieta en ambas fechas'
-                : 'Altura vertical respecto al banco'
+                ? (en ? 'Crack profiles from both dates' : 'Perfiles de la grieta en ambas fechas')
+                : (en ? 'Vertical height relative to the benchmark' : 'Altura vertical respecto al banco')
             }
           />
           <div className="slider-row mt-2">
             <label className="text-xs text-[var(--oj-ink)] font-mono">
-              {regionId === 'bafin' ? 'Desplazamiento este: ' : 'Altura final: '}
+              {regionId === 'bafin' ? (en ? 'Eastward displacement: ' : 'Desplazamiento este: ') : (en ? 'Final height: ' : 'Altura final: ')}
               <strong>
                 {sliderVal} {regionId === 'bafin' ? 'm' : 'mm'}
               </strong>
@@ -303,12 +315,12 @@ export default function LaboratorioView({ regionId, onCompletado }) {
             className="lab-btn primario mt-3"
             onClick={regionId === 'bafin' ? validarBafin : validarYakarta}
           >
-            {regionId === 'bafin' ? 'Fijar desplazamiento' : 'Registrar nivel'}
+            {regionId === 'bafin' ? (en ? 'Set displacement' : 'Fijar desplazamiento') : (en ? 'Record level' : 'Registrar nivel')}
           </button>
         </div>
       )}
 
-      {mensaje && <p className="lab-status mt-2 text-xs font-semibold text-[#f0c46a]">{mensaje}</p>}
+      {mensaje && <p className="lab-status mt-2 text-xs font-semibold text-[#f0c46a]">{translate(mensaje)}</p>}
     </div>
   )
 }

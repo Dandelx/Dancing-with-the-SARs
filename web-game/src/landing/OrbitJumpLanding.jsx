@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import './landing.css'
-import { detectLanguage, getStrings } from './i18n.js'
+import { getStrings } from './i18n.js'
 import audio from './audio/audioEngine.js'
 import { createOrbitScene } from './three/OrbitScene.js'
 import TopBar from './components/TopBar.jsx'
@@ -38,8 +38,7 @@ const storeToggle = (key, value) => {
   }
 }
 
-export default function OrbitJumpLanding() {
-  const [lang, setLang] = useState(detectLanguage)
+export default function OrbitJumpLanding({ lang, onLanguageChange }) {
   const t = getStrings(lang)
   const [eyebrowLead, eyebrowTail] = t.eyebrow.split('·').map((part) => part.trim())
 
@@ -86,11 +85,6 @@ export default function OrbitJumpLanding() {
   /* --- Language --- */
   useEffect(() => {
     document.documentElement.lang = lang
-    try {
-      window.localStorage.setItem('orbitjump.lang', lang)
-    } catch {
-      /* ignore */
-    }
   }, [lang])
 
   /* --- Audio bootstrapping (autoplay policies need a gesture) --- */
@@ -138,7 +132,7 @@ export default function OrbitJumpLanding() {
 
   /* --- Handlers --- */
   const changeLanguage = (next) => {
-    setLang(next)
+    onLanguageChange(next)
   }
 
   const changeVolume = (value) => {
@@ -297,7 +291,7 @@ export default function OrbitJumpLanding() {
           className="oj-stage"
           ref={stageRef}
           role="img"
-          aria-label="Earth rotating in space with the NISAR satellite and a space station in orbit, Peru glowing over the Andes"
+          aria-label={lang === 'en' ? 'Earth rotating in space with the NISAR satellite and a space station in orbit, Peru glowing over the Andes' : 'La Tierra gira en el espacio con el satélite NISAR y una estación espacial en órbita; Perú brilla sobre los Andes'}
         >
           {glError && <div className="oj-earth-fallback" aria-hidden="true" />}
           <div className="oj-peru-label" ref={labelRef}>

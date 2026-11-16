@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { RUTAS } from './misionesData.js'
+import { MISSIONS_EN } from './englishData.js'
 import { Mundo } from './mundoEngine.js'
 import audio from '../landing/audio/audioEngine.js'
 import {
@@ -10,6 +11,8 @@ import {
   Orbit,
   Satellite
 } from 'lucide-react'
+
+const RUTAS_EN = { andes: 'Andes', amazonia: 'Amazon', bafin: 'Baffin', yakarta: 'Jakarta', volcan: 'Hayli Gubbi' }
 
 const METADATOS_REGIONES_NASA = {
   andes: {
@@ -80,6 +83,7 @@ const METADATOS_REGIONES_NASA = {
 }
 
 export default function WorldMapModal({
+  lang,
   isOpen,
   onClose,
   misiones,
@@ -88,6 +92,8 @@ export default function WorldMapModal({
   destino,
   onSelectDestino
 }) {
+  const en = lang === 'en'
+  const regionNames = en ? RUTAS_EN : RUTAS
   const canvasRef = useRef(null)
   const [selectedRegionId, setSelectedRegionId] = useState(null)
 
@@ -113,7 +119,7 @@ export default function WorldMapModal({
       const [wx, wy] = Mundo.sitios[m.id].puerta
       const x = Math.round((wx / Mundo.ancho) * canvas.width)
       const y = Math.round((wy / Mundo.alto) * canvas.height) - 12
-      const texto = RUTAS[m.id] + (resueltas.has(m.id) ? ' ✓' : '')
+      const texto = regionNames[m.id] + (resueltas.has(m.id) ? ' ✓' : '')
       const textWidth = Math.ceil(ctx.measureText(texto).width)
 
       ctx.fillStyle = '#05060d'
@@ -126,7 +132,7 @@ export default function WorldMapModal({
       ctx.fillText(texto, x, y)
     }
     ctx.restore()
-  }, [isOpen, posicion, destino, misiones, resueltas])
+  }, [isOpen, posicion, destino, misiones, resueltas, regionNames])
 
   if (!isOpen) return null
 
@@ -163,7 +169,7 @@ export default function WorldMapModal({
           <div className="flex items-center gap-2">
             <Compass size={20} className="text-[var(--oj-gold-2)]" />
             <h2 id="tituloCarta" className="carta-title">
-              Carta del Mundo &bull; Red de Monitoreo NISAR
+              {en ? 'World map · NISAR monitoring network' : 'Carta del Mundo · Red de Monitoreo NISAR'}
             </h2>
           </div>
           <button
@@ -173,9 +179,9 @@ export default function WorldMapModal({
               audio.sfx('click')
               onClose()
             }}
-            aria-label="Cerrar carta del mundo"
+            aria-label={en ? 'Close world map' : 'Cerrar carta del mundo'}
           >
-            Cerrar <kbd>M</kbd>
+            {en ? 'Close' : 'Cerrar'} <kbd>M</kbd>
           </button>
         </header>
 
@@ -186,14 +192,14 @@ export default function WorldMapModal({
             width={540}
             height={320}
             className="carta-canvas"
-            aria-label="Carta de las cinco regiones y posición actual de Quipu"
+            aria-label={en ? 'Map of the five regions and Quipu’s current position' : 'Carta de las cinco regiones y posición actual de Quipu'}
           />
         </div>
 
         {/* Botones de Selección de Región */}
         <div className="destinos-container">
           <span className="destinos-label">
-            Selecciona una región para consultar sus datos satelitales o marcar rumbo:
+            {en ? 'Select a region to view satellite data or set a destination:' : 'Selecciona una región para consultar sus datos satelitales o marcar rumbo:'}
           </span>
           <div className="destinos-buttons">
             {misiones.map((m) => (
@@ -203,7 +209,7 @@ export default function WorldMapModal({
                 className={`destino-btn ${inspectedId === m.id ? 'is-selected' : ''}`}
                 onClick={() => handleSelectRegion(m.id)}
               >
-                {RUTAS[m.id]} {resueltas.has(m.id) ? '✓' : ''}
+                {regionNames[m.id]} {resueltas.has(m.id) ? '✓' : ''}
               </button>
             ))}
           </div>
@@ -215,21 +221,21 @@ export default function WorldMapModal({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--oj-cyan)]">
-                  {infoNasa.region} &bull; {infoNasa.pais}
+                  {en ? MISSIONS_EN[inspectedId].lugar : `${infoNasa.region} · ${infoNasa.pais}`}
                 </span>
                 {isResuelta ? (
                   <span className="geodetic-badge is-resolved">
                     <CheckCircle2 size={11} className="inline mr-1" />
-                    Caso Resuelto
+                    {en ? 'Case solved' : 'Caso Resuelto'}
                   </span>
                 ) : (
                   <span className="geodetic-badge is-pending">
-                    Misión Pendiente
+                    {en ? 'Mission pending' : 'Misión Pendiente'}
                   </span>
                 )}
               </div>
               <h3 className="geodetic-title">
-                {misionActual?.lugar || RUTAS[inspectedId]}: {infoNasa.lugarOficial}
+                {en ? MISSIONS_EN[inspectedId].lugar : `${misionActual?.lugar || RUTAS[inspectedId]}: ${infoNasa.lugarOficial}`}
               </h3>
             </div>
           </div>
@@ -239,7 +245,7 @@ export default function WorldMapModal({
             <div className="geodetic-item">
               <span className="geodetic-label">
                 <MapPin size={12} className="inline mr-1 text-[var(--oj-gold-2)]" />
-                Coordenadas Geodésicas:
+                {en ? 'Coordinates:' : 'Coordenadas Geodésicas:'}
               </span>
               <span className="geodetic-value font-mono text-[var(--oj-gold-light)]">
                 {infoNasa.coordenadasStr}
@@ -252,13 +258,13 @@ export default function WorldMapModal({
             <div className="geodetic-item">
               <span className="geodetic-label">
                 <Satellite size={12} className="inline mr-1 text-[var(--oj-cyan)]" />
-                Sensor & Órbita:
+                {en ? 'Sensor & orbit:' : 'Sensor & Órbita:'}
               </span>
               <span className="geodetic-value font-mono">
-                {infoNasa.sensor}
+                {en ? infoNasa.sensor.replace('Banda', 'L-band').replace('L-band L', 'L-band') : infoNasa.sensor}
               </span>
               <span className="text-[10px] font-mono text-[var(--oj-cyan)] block">
-                {infoNasa.track}
+                {en ? infoNasa.track.replace('Descendente', 'Descending').replace('Interferometría', 'Interferometry').replace(' y ', ' and ') : infoNasa.track}
               </span>
             </div>
           </div>
@@ -268,12 +274,12 @@ export default function WorldMapModal({
             <div>
               <span className="geodetic-label block mb-1">
                 <Orbit size={12} className="inline mr-1 text-[var(--oj-gold-2)]" />
-                Productos NASA Asociados:
+                {en ? 'Related NASA products:' : 'Productos NASA Asociados:'}
               </span>
               <div className="flex flex-wrap gap-1">
                 {infoNasa.productos.map((prod) => (
                   <span key={prod} className="nasa-chip">
-                    {prod}
+                    {en ? prod.replace('Banda L', 'L-band') : prod}
                   </span>
                 ))}
               </div>
@@ -285,9 +291,9 @@ export default function WorldMapModal({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="asf-catalog-btn"
-                title="Consultar catálogo abierto en Alaska Satellite Facility"
+                title={en ? 'Open the Alaska Satellite Facility catalog' : 'Consultar catálogo abierto en Alaska Satellite Facility'}
               >
-                <span>Catálogo ASF</span>
+                <span>{en ? 'ASF catalog' : 'Catálogo ASF'}</span>
                 <ExternalLink size={12} />
               </a>
 
@@ -298,7 +304,7 @@ export default function WorldMapModal({
               >
                 <Compass size={13} />
                 <span>
-                  {isDestinoActivo ? 'Rumbo Activo' : 'Marcar Rumbo'}
+                  {isDestinoActivo ? (en ? 'Destination set' : 'Rumbo Activo') : (en ? 'Set destination' : 'Marcar Rumbo')}
                 </span>
               </button>
             </div>
@@ -307,8 +313,8 @@ export default function WorldMapModal({
 
         <p className="carta-hint">
           {destino && misiones.find((m) => m.id === destino)
-            ? `Rumbo marcado hacia ${misiones.find((m) => m.id === destino).lugar}. La brújula te guiará en el mapa.`
-            : 'Selecciona una región y pulsa "Marcar Rumbo" para que la brújula te guíe en el mundo abierto.'}
+            ? (en ? `Destination set: ${MISSIONS_EN[destino].lugar}. Follow the compass on the map.` : `Rumbo marcado hacia ${misiones.find((m) => m.id === destino).lugar}. La brújula te guiará en el mapa.`)
+            : (en ? 'Select a region and set a destination to follow the compass.' : 'Selecciona una región y pulsa "Marcar Rumbo" para que la brújula te guíe en el mundo abierto.')}
         </p>
       </section>
     </div>

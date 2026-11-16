@@ -10,10 +10,6 @@ dist/
 dist-smoke/
 *.local
 
-# Datos generados del pipeline (se reconstruyen con Python)
-web-game/public/data/*
-!web-game/public/data/.gitkeep
-
 # Editores / SO
 .vscode/
 .idea/

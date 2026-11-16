@@ -39,6 +39,7 @@ class OrbitAudio {
     this.volume = 0.55
     this.muted = false
     this.musicEnabled = true
+    this.musicScene = 'default'
     this.sfxEnabled = true
     this.started = false
     this.unlocked = false
@@ -154,6 +155,11 @@ class OrbitAudio {
     }
   }
 
+  /** Switch between the expedition score and the original space ambience. */
+  setMusicScene(scene) {
+    this.musicScene = scene === 'space' ? 'space' : 'default'
+  }
+
   /* ------------------------------------------------------------------ */
   /* Generative ambient music                                            */
   /* ------------------------------------------------------------------ */
@@ -181,6 +187,10 @@ class OrbitAudio {
   }
 
   _playStep(step, time) {
+    if (this.musicScene === 'space') {
+      this._playSpaceStep(step, time)
+      return
+    }
     const bar = Math.floor(step / 8) % 4
     const inBar = step % 8
     const chord = CHORDS[bar]
@@ -224,6 +234,18 @@ class OrbitAudio {
     /* Bombo on the downbeat, shaker on the offbeat. */
     if (inBar === 0 || inBar === 4) this._bombo(time)
     if (inBar % 2 === 1) this._shaker(time)
+  }
+
+  _playSpaceStep(step, time) {
+    const roots = [45, 41, 48, 43]
+    const root = roots[Math.floor(step / 16) % roots.length]
+    if (step % 16 === 0) {
+      this._voice({ freq: midiToFreq(root), time, dur: this.stepDur * 15, type: 'sine', gain: 0.035, attack: 1.6, release: 2.8, pan: -0.15 })
+      this._voice({ freq: midiToFreq(root + 7), time, dur: this.stepDur * 15, type: 'sine', gain: 0.018, attack: 2.2, release: 3, pan: 0.15 })
+    }
+    if (step % 8 === 4) {
+      this._voice({ freq: midiToFreq(root + 24), time, dur: this.stepDur * 3, type: 'triangle', gain: 0.009, attack: 0.8, release: 2.2, pan: step % 16 === 4 ? -0.35 : 0.35 })
+    }
   }
 
   _voice({

@@ -378,6 +378,23 @@ kbd {
   line-height: 1.5;
 }
 
+/* Supplemental satellite context sits with the game, beside the journal. */
+.nasa-game-extras:not(:empty) {
+  padding: 4px 14px 14px;
+}
+
+.nasa-extras-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.nasa-extras-layout .nasa-map-wrapper,
+.nasa-extras-layout .nasa-science-card {
+  min-width: 0;
+}
+
 /* Bitacora / Lateral Column */
 .atlas-sidebar {
   display: flex;
@@ -482,6 +499,59 @@ kbd {
   color: var(--nb-muted);
   line-height: 1.4;
 }
+
+.notebook-navigation {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0 6px;
+}
+.notebook-navigation button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #b7c7a9;
+  border-radius: 7px;
+  background: #f5f7ec;
+  color: #243d2c;
+  font: 700 13px var(--at-display);
+  text-align: left;
+  cursor: pointer;
+}
+.notebook-navigation button:hover:not(:disabled),
+.notebook-navigation button[aria-expanded='true'] { background: #dcebd5; border-color: #577f5c; }
+.notebook-navigation button:disabled { opacity: .55; cursor: not-allowed; }
+.notebook-navigation kbd, .apuntes-trigger kbd {
+  color: #254533;
+  background: #fffdf4;
+  border-color: #9eae93;
+  font-weight: 700;
+}
+.notebook-navigation button:focus-visible, .notebook-replay-trivia:focus-visible { outline: 3px solid #916316; outline-offset: 2px; }
+.notebook-replay-trivia { margin: 10px 0 0; padding: 3px 0; border: 0; background: none; color: #305b3c; font: 600 12px var(--at-body); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.nasa-analysis-title { color: #fff0ba; }
+.bitacora-notificacion {
+  position: fixed;
+  z-index: 1100;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(420px, calc(100% - 32px));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid #e9cb80;
+  border-radius: 10px;
+  background: #18392c;
+  color: #fff9e8;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .4);
+}
+.bitacora-notificacion-icon { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; background: #d8edbb; color: #214c2c; }
+.bitacora-notificacion strong { display: block; font: 700 14px var(--at-display); }
+.bitacora-notificacion p { margin: 2px 0 0; color: #f3ecd8; font-size: 12px; line-height: 1.4; }
 
 /* Section divider */
 .notebook-section {

@@ -1,0 +1,69 @@
+﻿.quipu-trivia {
+  margin: 24px 0;
+  padding: 18px;
+  background: #efe4c7;
+  color: #253729;
+  border: 2px solid #8d6b45;
+  border-radius: 12px;
+}
+.trivia-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid #c6b38f; padding-bottom: 10px; }
+.trivia-heading h3 { margin: 0; color: #233e2b; font-size: 1.1rem; }
+.trivia-heading span { color: #526249; font-size: .75rem; font-weight: 700; white-space: nowrap; }
+.trivia-dialogue { display: grid; grid-template-columns: minmax(82px, 28%) 1fr; align-items: end; gap: 8px; margin: 14px 0 8px; }
+.trivia-portrait { width: 100%; max-height: 180px; object-fit: contain; object-position: bottom; image-rendering: auto; }
+.trivia-speech { min-width: 0; min-height: 125px; background: #fffdf7; border: 2px solid #4c3841; border-radius: 14px 14px 14px 3px; padding: 14px 15px; }
+.trivia-speech strong { color: #476540; font-size: .75rem; letter-spacing: .05em; }
+.trivia-speech p { margin: 6px 0; color: #233328; font-size: .9rem; line-height: 1.5; }
+.trivia-caret { color: #987330; animation: trivia-blink 1s step-end infinite; }
+@keyframes trivia-blink { 50% { opacity: 0; } }
+.trivia-skip { border: 0; padding: 0; background: none; color: #34583d; font: inherit; font-size: .7rem; text-decoration: underline; cursor: pointer; }
+.trivia-instruction { color: #354c37; font-size: .78rem; font-weight: 700; margin: 12px 0 8px; }
+.trivia-choices { display: grid; gap: 7px; }
+.trivia-choice { display: flex; align-items: center; text-align: left; gap: 10px; width: 100%; padding: 10px; border: 1px solid #b8aa87; border-radius: 8px; color: #203528; background: #fffdf7; font: inherit; font-size: .8rem; line-height: 1.4; cursor: pointer; }
+.trivia-choice:hover:not(:disabled) { background: #f5f4df; border-color: #476540; }
+.trivia-choice:disabled { cursor: default; opacity: 1; }
+.trivia-choice.is-correct { background: #dcefd4; border-color: #4f8743; }
+.trivia-choice.is-wrong { background: #f5e0d9; border-color: #b75e4a; }
+.trivia-choice img { width: 30px; height: 25px; object-fit: contain; margin-left: auto; flex: none; image-rendering: pixelated; }
+.trivia-letter { flex: none; display: grid; place-items: center; width: 24px; height: 24px; background: #e8e4ce; border-radius: 5px; font-weight: 700; }
+.trivia-next { display: block; margin: 14px 0 0 auto; padding: 10px 14px; border: 1px solid #244731; border-radius: 7px; background: #315b3c; color: #fff; font: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; }
+.trivia-next:hover { background: #244731; }
+.trivia-choice:focus-visible, .trivia-next:focus-visible, .trivia-skip:focus-visible, .trivia-source a:focus-visible { outline: 3px solid #ae6d16; outline-offset: 2px; }
+.trivia-source { margin: 14px 0 0; font-size: .7rem; color: #526249; }
+.trivia-source a { color: #254e32; text-decoration: underline; }
+.trivia-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (max-width: 480px) { .quipu-trivia { padding: 12px; } .trivia-dialogue { grid-template-columns: 76px 1fr; } .trivia-portrait { max-height: 130px; } .trivia-speech { padding: 10px; } }
+@media (prefers-reduced-motion: reduce) { .trivia-caret { animation: none; } }
+
+/* Dialogues float over the expedition so the game remains the backdrop. */
+.visor-header-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+.apuntes-trigger { border: 1px solid #d0a85c; border-radius: 6px; background: #e8c679; color: #253328; padding: 7px 10px; font: 700 12px var(--at-display); cursor: pointer; }
+.apuntes-trigger:hover { background: #f4d898; }
+.apuntes-trigger:focus-visible, .campo-cerrar:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.notebook-field-hint { color: var(--nb-muted); font-size: .78rem; line-height: 1.5; margin: 18px 0; }
+.juego-dialogo-fondo { position: fixed; z-index: 1000; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding: 20px; background: rgba(5, 12, 18, .66); }
+.juego-dialogo { width: min(820px, 100%); max-height: calc(100dvh - 40px); overflow: auto; outline: none; box-shadow: 0 12px 38px rgba(0,0,0,.45); }
+.campo-dialogo { align-self: center; background: #fffaf0; color: #233629; border: 4px solid #594044; border-radius: 12px; padding: clamp(16px, 3vw, 26px); }
+.campo-dialogo-header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; padding-bottom: 12px; border-bottom: 1px solid #c7b894; }
+.campo-dialogo-header span { color: #52664c; font-size: .75rem; font-weight: 700; }
+.campo-dialogo-header h2 { margin: 3px 0 0; color: #223e2c; font-size: 1.4rem; }
+.campo-cerrar { width: 38px; height: 38px; border: 1px solid #aa9777; border-radius: 6px; color: #233629; background: #f1e5c9; font-size: 25px; line-height: 1; cursor: pointer; }
+.campo-pistas, .campo-actividad { margin-top: 20px; }
+.campo-pistas h3, .campo-actividad h3 { margin: 0 0 8px; color: #274832; font-size: 1rem; }
+.campo-pistas p, .campo-actividad p, .campo-vacio, .campo-progreso { font-size: .88rem; line-height: 1.55; margin: 8px 0; }
+.campo-progreso { margin-top: 16px; padding: 10px 12px; background: #e9efd9; border-radius: 6px; }
+.trivia-dialogo-juego { overflow: auto; border-radius: 12px; }
+.trivia-dialogo-juego .quipu-trivia { margin: 0; padding: clamp(14px, 2.2vw, 22px); background: #faf3df; border: 5px solid #50404a; box-shadow: inset 0 0 0 3px #f9e5b2; }
+.trivia-dialogo-juego .trivia-dialogue { grid-template-columns: minmax(100px, 22%) 1fr; margin-top: 8px; }
+.trivia-dialogo-juego .trivia-portrait { max-height: 150px; }
+.trivia-dialogo-juego .trivia-speech { min-height: 100px; }
+.trivia-dialogo-juego .trivia-choices { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.trivia-dialogo-juego .trivia-choice { align-items: flex-start; }
+@media (max-width: 650px) {
+  .juego-dialogo-fondo { padding: 8px; }
+  .juego-dialogo { max-height: calc(100dvh - 16px); }
+  .trivia-dialogo-juego .trivia-choices { grid-template-columns: 1fr; }
+  .trivia-dialogo-juego .trivia-dialogue { grid-template-columns: 76px 1fr; }
+  .trivia-dialogo-juego .trivia-portrait { max-height: 105px; }
+  .visor-header { gap: 8px; }
+}

@@ -10,13 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "chart.js": "^4.6.1",
     "leaflet": "^1.9.4",
-    "leaflet-side-by-side": "^2.2.0",
     "lucide-react": "^1.73.0",
-    "phaser": "^4.2.1",
     "react": "^19.3.1",
-    "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.3.1",
     "three": "^0.187.0"
   },
